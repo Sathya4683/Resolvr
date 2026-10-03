@@ -5,11 +5,17 @@ import { AppShell } from './components/AppShell'
 import { EmptyState } from './components/ui'
 import { homePath, useAuth } from './lib/auth'
 import type { Role } from './lib/types'
+import { Audit, Users } from './pages/AdminPages'
 import Approvals from './pages/Approvals'
 import Assistant from './pages/Assistant'
 import Batch from './pages/Batch'
+import Categories from './pages/Categories'
+import DataImport from './pages/DataImport'
+import { KnowledgeArticle, KnowledgeList } from './pages/Knowledge'
+import KnowledgeEditor from './pages/KnowledgeEditor'
 import Login from './pages/Login'
 import NewTicket from './pages/NewTicket'
+import Overview from './pages/Overview'
 import TicketDetail from './pages/TicketDetail'
 
 function RequireAuth({ roles, children }: { roles?: Role[]; children: ReactNode }) {
@@ -75,6 +81,15 @@ export default function App() {
             </RequireAuth>
           }
         />
+        <Route path="admin" element={<RequireAuth roles={['admin']}><Overview /></RequireAuth>} />
+        <Route path="categories" element={<RequireAuth roles={['admin']}><Categories /></RequireAuth>} />
+        <Route path="data" element={<RequireAuth roles={['admin']}><DataImport /></RequireAuth>} />
+        <Route path="users" element={<RequireAuth roles={['admin']}><Users /></RequireAuth>} />
+        <Route path="audit" element={<RequireAuth roles={['admin']}><Audit /></RequireAuth>} />
+        <Route path="knowledge" element={<KnowledgeList />} />
+        <Route path="knowledge/new" element={<RequireAuth roles={['admin', 'analyst']}><KnowledgeEditor /></RequireAuth>} />
+        <Route path="knowledge/:ref" element={<KnowledgeArticle />} />
+        <Route path="knowledge/:ref/edit" element={<RequireAuth roles={['admin', 'analyst']}><KnowledgeEditor /></RequireAuth>} />
         <Route
           path="*"
           element={<EmptyState icon={<span>404</span>} title="Page not found" text="That page doesn't exist." />}

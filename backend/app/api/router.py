@@ -1,6 +1,6 @@
 from fastapi import APIRouter
 
-from app.api.v1 import approvals, auth, batch, categories, chat, data, knowledge, notifications, tickets, users
+from app.api.v1 import admin, approvals, auth, batch, categories, chat, data, knowledge, notifications, tickets, users
 
 api_router = APIRouter()
 api_router.include_router(auth.router)
@@ -13,3 +13,4 @@ api_router.include_router(approvals.router)
 api_router.include_router(notifications.router)
 api_router.include_router(batch.router)
 api_router.include_router(chat.router)
+api_router.include_router(admin.router)

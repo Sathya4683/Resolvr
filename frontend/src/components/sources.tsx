@@ -24,11 +24,11 @@ export function CitationChip({ refId, onClick }: { refId: string; onClick?: () =
   )
 }
 
-export function SimilarityBar({ value }: { value: number }) {
+export function SimilarityBar({ value, compact }: { value: number; compact?: boolean }) {
   const pct = Math.max(0, Math.min(1, value)) * 100
   return (
-    <div className="flex items-center gap-2">
-      <div className="h-1.5 w-20 overflow-hidden rounded-full bg-raised">
+    <div className="flex shrink-0 items-center gap-2">
+      <div className={clsx('h-1.5 overflow-hidden rounded-full bg-raised', compact ? 'w-10' : 'w-20')}>
         <div
           className={clsx('h-full rounded-full', pct >= 75 ? 'bg-ok' : pct >= 60 ? 'bg-accent' : 'bg-ink-3')}
           style={{ width: `${pct}%` }}
@@ -56,10 +56,10 @@ export function SourceCard({ source, onOpen, cited }: { source: Source; onOpen: 
           >
             {kb ? <BookOpen className="size-3.5" /> : <Ticket className="size-3.5" />}
           </span>
-          <Mono className="text-ink-2">{source.ref}</Mono>
+          <Mono className="whitespace-nowrap text-ink-2">{source.ref}</Mono>
           {cited && <Badge tone="ok">cited</Badge>}
         </div>
-        <SimilarityBar value={source.similarity} />
+        <SimilarityBar value={source.similarity} compact />
       </div>
       <div className="line-clamp-1 text-sm font-medium text-ink group-hover:text-white">{source.title}</div>
       <div className="line-clamp-2 text-xs leading-relaxed text-ink-3">{source.snippet}</div>

@@ -72,6 +72,16 @@
   --color-border-muted: var(--color-line);
   --color-fg-default: var(--color-ink);
 }
+/* tailwind's reset removes list markers, give them back inside the markdown preview */
+.wmde-markdown ul {
+  list-style: disc;
+}
+.wmde-markdown ol {
+  list-style: decimal;
+}
+.wmde-markdown {
+  background: transparent !important;
+}
 [data-color-mode="dark"] .w-md-editor {
   background-color: var(--color-panel);
   box-shadow: none;

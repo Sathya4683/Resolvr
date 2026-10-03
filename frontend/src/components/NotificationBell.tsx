@@ -23,20 +23,21 @@ export function NotificationBell() {
   const qc = useQueryClient()
   const seen = useRef<Set<number> | null>(null)
 
-  const { data = [] } = useQuery({
+  const { data = [], isSuccess } = useQuery({
     queryKey: ['notifications'],
     queryFn: () => api.get<Notification[]>('/v1/notifications'),
     refetchInterval: 15_000,
   })
   const unread = data.filter((n) => !n.is_read).length
 
-  //pop a toast for anything new that arrived since the last poll
+  //pop a toast for anything new that arrived since the last poll (not for what was already there on page load)
   useEffect(() => {
+    if (!isSuccess) return
     if (seen.current === null) {
       seen.current = new Set(data.map((n) => n.id))
       return
     }
-    for (const n of data) {
+    for (const n of data.slice(0, 3)) {
       if (!seen.current.has(n.id) && !n.is_read) {
         toast(n.title, {
           description: n.body ?? undefined,
@@ -47,7 +48,7 @@ export function NotificationBell() {
       }
       seen.current.add(n.id)
     }
-  }, [data, navigate, qc])
+  }, [data, isSuccess, navigate, qc])
 
   const markAll = async () => {
     await api.post('/v1/notifications/read-all')

@@ -38,7 +38,10 @@ export function timeAgo(iso: string) {
 
 export function titleCase(s: string | null | undefined) {
   if (!s) return ''
-  return s.replace(/_/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase())
+  return s
+    .replace(/_/g, ' ')
+    .replace(/\b\w/g, (c) => c.toUpperCase())
+    .replace(/\bDth\b/g, 'DTH')
 }
 
 export function pct(n: number | null | undefined, digits = 0) {
