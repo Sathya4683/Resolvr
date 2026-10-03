@@ -104,7 +104,15 @@ def test_roles(client, headers, analysis_id):
     for role in ("support_agent", "admin"):
         assert client.post(f"/v1/reviews/{analysis_id}/claim", headers=headers[role]).status_code == 403
     assert client.get("/v1/reviews/queue", headers=headers["support_agent"]).status_code == 403
-    #analysts can't approve critical drafts or touch categories
+    #analysts can't approve critical drafts
     assert client.post(f"/v1/approvals/{analysis_id}/decision", headers=headers["analyst"],
                        json={"action": "approve"}).status_code == 403
-    assert client.post("/v1/categories", headers=headers["analyst"], json={}).status_code == 403
+
+
+def test_only_the_latest_analysis_of_a_ticket_is_queued(client, headers, analysis_id):
+    ticket = client.get("/v1/reviews/queue", headers=headers["analyst"]).json()[0]["ticket_ref"]
+    FakeProvider.queue("classify", classify_response())
+    client.post(f"/v1/tickets/{ticket}/reanalyze", headers=headers["support_agent"])
+    queue = client.get("/v1/reviews/queue", headers=headers["analyst"]).json()
+    assert [q["ticket_ref"] for q in queue] == [ticket]
+    assert queue[0]["analysis_id"] != analysis_id

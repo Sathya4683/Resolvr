@@ -58,7 +58,11 @@ def load(db: Session, ref: str) -> KbArticle:
 
 def check_category(db: Session, slug: str | None) -> None:
     if slug and find_category(db, slug) is None:
-        raise HTTPException(status.HTTP_422_UNPROCESSABLE_CONTENT, f"Unknown category '{slug}'")
+        raise HTTPException(
+            status.HTTP_422_UNPROCESSABLE_CONTENT,
+            f"Category '{slug}' doesn't exist yet. Add it under Categories first, "
+            "or remove the category line from the file.",
+        )
 
 
 @router.get("", response_model=list[KbArticleListItem])

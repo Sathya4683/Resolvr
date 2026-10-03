@@ -120,3 +120,22 @@ def test_promote_agent_resolved_ticket(client, headers, categories, db):
     assert res.json()["promoted"] == [ticket["ref"]]
     db.expire_all()
     assert db.query(Ticket).filter_by(ref=ticket["ref"]).one().is_searchable is True
+
+
+def test_analyst_can_add_a_category_and_use_it_in_an_article(client, headers, categories):
+    res = client.post("/v1/categories", headers=headers["analyst"],
+                      json={"name": "OTT App Subscriptions",
+                            "description": "Streaming apps bundled with the plan are not activating"})
+    assert res.status_code == 201
+    md = "## Steps\n1. Check Plan > Bundled apps in CRM.\n2. Resend the activation link."
+    res = client.post("/v1/kb", headers=headers["analyst"],
+                      json={"title": "Bundled OTT app not active", "content_md": md,
+                            "category_slug": "ott_app_subscriptions"})
+    assert res.status_code == 201
+
+
+def test_unknown_category_error_says_what_to_do(client, headers, categories):
+    res = client.post("/v1/kb", headers=headers["analyst"],
+                      json={"title": "Something new", "content_md": "## Steps\n1. Do the thing properly.",
+                            "category_slug": "not_there_yet"})
+    assert res.status_code == 422 and "Add it under Categories first" in res.json()["detail"]

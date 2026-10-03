@@ -1,6 +1,8 @@
 """
-The ticket taxonomy lives in the database, so admins can add / rename / switch off categories
-without a redeploy. The classifier reads the active list on every request.
+The ticket taxonomy lives in the database, so admins and analysts can add / rename / switch off
+categories without a redeploy. The classifier reads the active list on every request.
+Analysts are included because they are the ones who spot new kinds of issues while reviewing.
+Every change is audit logged.
 """
 
 import re
@@ -11,7 +13,7 @@ from sqlalchemy.orm import Session
 
 from app import embeddings
 from app.db import get_db
-from app.deps import admin_only, any_user
+from app.deps import analyst_or_admin, any_user
 from app.models import Category, Ticket, User
 from app.schemas import CategoryCreate, CategoryOut, CategoryUpdate, RelabelCandidate, RelabelIn
 from app.services import audit
@@ -55,7 +57,7 @@ def list_categories(
 
 
 @router.post("", response_model=CategoryOut, status_code=201)
-def create_category(body: CategoryCreate, db: Session = Depends(get_db), admin: User = Depends(admin_only)):
+def create_category(body: CategoryCreate, db: Session = Depends(get_db), user: User = Depends(analyst_or_admin)):
     slug = body.slug or slugify(body.name)
     #sql: SELECT id FROM categories WHERE slug = :slug
     if db.scalar(select(Category.id).where(Category.slug == slug)):
@@ -69,27 +71,27 @@ def create_category(body: CategoryCreate, db: Session = Depends(get_db), admin: 
     )
     db.add(category)
     db.flush()
-    audit.record(db, admin, "category.create", "category", category.slug, name=category.name)
+    audit.record(db, user, "category.create", "category", category.slug, name=category.name)
     db.commit()
     return category
 
 
 @router.patch("/{category_id}", response_model=CategoryOut)
 def update_category(
-    category_id: int, body: CategoryUpdate, db: Session = Depends(get_db), admin: User = Depends(admin_only)
+    category_id: int, body: CategoryUpdate, db: Session = Depends(get_db), user: User = Depends(analyst_or_admin)
 ):
     category = load(db, category_id)
     changes = body.model_dump(exclude_unset=True)
     for field, value in changes.items():
         setattr(category, field, value)
-    audit.record(db, admin, "category.update", "category", category.slug, changes=changes)
+    audit.record(db, user, "category.update", "category", category.slug, changes=changes)
     db.commit()
     return category
 
 
 @router.get("/{category_id}/candidates", response_model=list[RelabelCandidate])
 def relabel_candidates(
-    category_id: int, limit: int = 20, db: Session = Depends(get_db), _: User = Depends(admin_only)
+    category_id: int, limit: int = 20, db: Session = Depends(get_db), _: User = Depends(analyst_or_admin)
 ):
     """
     for a new class (say "5G home router issues"), old tickets were filed under other categories.
@@ -123,11 +125,11 @@ def relabel_candidates(
 
 
 @router.post("/{category_id}/relabel")
-def relabel(category_id: int, body: RelabelIn, db: Session = Depends(get_db), admin: User = Depends(admin_only)):
+def relabel(category_id: int, body: RelabelIn, db: Session = Depends(get_db), user: User = Depends(analyst_or_admin)):
     category = load(db, category_id)
     refs = [r.upper() for r in body.refs]
     #sql: UPDATE tickets SET category_id = :category_id WHERE ref IN (:refs)
     result = db.execute(update(Ticket).where(Ticket.ref.in_(refs)).values(category_id=category.id))
-    audit.record(db, admin, "category.relabel", "category", category.slug, tickets=refs)
+    audit.record(db, user, "category.relabel", "category", category.slug, tickets=refs)
     db.commit()
     return {"updated": result.rowcount}

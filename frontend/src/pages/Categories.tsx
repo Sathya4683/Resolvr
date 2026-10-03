@@ -38,7 +38,7 @@ export default function Categories() {
     <div className="mx-auto max-w-6xl px-6 pt-16 pb-16">
       <PageHeader
         title="Categories"
-        subtitle="The taxonomy lives in the database. Changes reach the classifier on the very next complaint, no redeploy."
+        subtitle="The taxonomy lives in the database. Admins and analysts can add or change classes, and the classifier uses them on the very next complaint."
         actions={
           <Button variant="primary" icon={<FolderPlus className="size-4" />} onClick={() => setEditing('new')}>
             New category
@@ -101,7 +101,15 @@ export default function Categories() {
   )
 }
 
-function CategoryForm({ category, onClose }: { category: Category | null; onClose: () => void }) {
+export function CategoryForm({
+  category,
+  onClose,
+  onSaved,
+}: {
+  category: Category | null
+  onClose: () => void
+  onSaved?: (category: Category) => void
+}) {
   const qc = useQueryClient()
   const [name, setName] = useState(category?.name ?? '')
   const [description, setDescription] = useState(category?.description ?? '')
@@ -111,11 +119,14 @@ function CategoryForm({ category, onClose }: { category: Category | null; onClos
   const save = useMutation({
     mutationFn: () => {
       const body = { name, description, product: product || null, default_severity: severity }
-      return category ? api.patch(`/v1/categories/${category.id}`, body) : api.post('/v1/categories', body)
+      return category
+        ? api.patch<Category>(`/v1/categories/${category.id}`, body)
+        : api.post<Category>('/v1/categories', body)
     },
-    onSuccess: () => {
+    onSuccess: (saved) => {
       qc.invalidateQueries({ queryKey: ['categories'] })
       toast.success(category ? 'Category updated' : 'Category added, the classifier can use it now')
+      onSaved?.(saved)
       onClose()
     },
     onError: (e: Error) => toast.error(e.message),

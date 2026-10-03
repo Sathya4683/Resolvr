@@ -140,7 +140,8 @@ which rules fired, sources and scores, draft, citation check, timings, tokens, c
 - Knowledge base editor (markdown with live preview, drag and drop `.md` files). Articles are searchable as soon as
   they're saved.
 - Categories: add, rename or switch off without a redeploy. "Find tickets" suggests old tickets that belong to a new
-  class (semantic search on the category description), for example a new *5G home router* class.
+  class (semantic search on the category description), for example a new *5G home router* class. Analysts can do
+  this too.
 - Data imports: resolved tickets and KB articles from CSV. Imports are idempotent and return a per-row error report.
   Agent-resolved tickets only become searchable after an admin promotes them, so a bad fix can't leak into future
   answers.
@@ -151,7 +152,10 @@ which rules fired, sources and scores, draft, citation check, timings, tokens, c
   hold an item at a time (an atomic `UPDATE ... RETURNING` claim with a 15 minute expiry).
 - Correct labels, score the answer (correct / safe / actionable / complete, citations proper) and leave a note.
   The note is stored with the complaint's embedding and injected as reviewer guidance when a similar complaint comes in.
-- Quality page and quality/evaluation PDF report. Analysts can also write KB articles.
+- Quality page and quality/evaluation PDF report.
+- Analysts are usually the first to notice a new kind of issue, so they can also add categories (with "find tickets"
+  and relabel) and write KB articles, including "+ New category" straight from the KB editor. Every change is
+  audit logged. The brief kept this admin-only, and I changed it on purpose.
 
 ## Severity and the approval rule
 

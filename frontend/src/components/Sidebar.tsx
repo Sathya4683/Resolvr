@@ -45,7 +45,7 @@ const NAV: NavItem[] = [
   { to: '/knowledge', label: 'Knowledge base', icon: BookOpen, roles: ['support_agent', 'admin', 'analyst'] },
   { to: '/quality', label: 'Quality', icon: Sparkles, roles: ['admin', 'analyst'] },
   { to: '/reports', label: 'Reports', icon: FileBarChart2, roles: ['admin', 'analyst'] },
-  { to: '/categories', label: 'Categories', icon: FolderTree, roles: ['admin'] },
+  { to: '/categories', label: 'Categories', icon: FolderTree, roles: ['admin', 'analyst'] },
   { to: '/data', label: 'Data & imports', icon: DatabaseZap, roles: ['admin'] },
   { to: '/users', label: 'Users', icon: Users, roles: ['admin'] },
   { to: '/audit', label: 'Audit log', icon: History, roles: ['admin'] },

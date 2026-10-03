@@ -12,7 +12,7 @@ from datetime import datetime, timedelta, timezone
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy import exists, func, or_, select, update
 from sqlalchemy.exc import IntegrityError
-from sqlalchemy.orm import Session
+from sqlalchemy.orm import Session, aliased
 
 from app import embeddings
 from app.config import settings
@@ -52,14 +52,19 @@ def review_queue(db: Session = Depends(get_db), user: User = Depends(analyst_or_
     """
     reviewed = exists().where(AnalystReview.analysis_id == Analysis.id)
     thumbs_down = exists().where(Feedback.analysis_id == Analysis.id, Feedback.rating == "down")
+    #a re-run ticket has several analyses, only the newest one is worth reviewing
+    newer = aliased(Analysis)
+    latest = exists().where(newer.ticket_id == Analysis.ticket_id, newer.id > Analysis.id)
     #sql: SELECT analyses.*, EXISTS (SELECT 1 FROM feedback WHERE analysis_id = analyses.id AND rating = 'down')
     #     FROM analyses
     #     WHERE NOT EXISTS (SELECT 1 FROM analyst_reviews WHERE analysis_id = analyses.id)
+    #       AND NOT EXISTS (SELECT 1 FROM analyses newer
+    #                       WHERE newer.ticket_id = analyses.ticket_id AND newer.id > analyses.id)
     #       AND review_status <> 'pending_review'
     #     ORDER BY created_at DESC LIMIT 200
     rows = db.execute(
         select(Analysis, thumbs_down.label("thumbs_down"))
-        .where(~reviewed, Analysis.review_status != "pending_review")
+        .where(~reviewed, ~latest, Analysis.review_status != "pending_review")
         .order_by(Analysis.created_at.desc())
         .limit(200)
     ).all()

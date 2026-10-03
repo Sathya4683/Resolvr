@@ -1,12 +1,13 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import MDEditor from '@uiw/react-md-editor'
-import { ArrowLeft, FileDown, Save } from 'lucide-react'
+import { ArrowLeft, FileDown, Plus, Save } from 'lucide-react'
 import { useEffect, useState, type DragEvent } from 'react'
 import { useNavigate, useParams } from 'react-router'
 import { toast } from 'sonner'
 import { Button, Card, PageHeader } from '../components/ui'
 import { api } from '../lib/api'
 import type { Category, KbArticle } from '../lib/types'
+import { CategoryForm } from './Categories'
 
 const STARTER = `## Symptoms
 - What the customer notices
@@ -45,6 +46,7 @@ export default function KnowledgeEditor() {
   const [product, setProduct] = useState('')
   const [tags, setTags] = useState('')
   const [dragging, setDragging] = useState(false)
+  const [addingCategory, setAddingCategory] = useState(false)
 
   const categories = useQuery({ queryKey: ['categories'], queryFn: () => api.get<Category[]>('/v1/categories') })
   const existing = useQuery({
@@ -149,7 +151,16 @@ export default function KnowledgeEditor() {
           />
         </div>
         <div>
-          <label className="label">Category</label>
+          <div className="flex items-center justify-between">
+            <label className="label">Category</label>
+            <button
+              type="button"
+              onClick={() => setAddingCategory(true)}
+              className="mb-1.5 flex items-center gap-1 text-xs text-accent hover:underline"
+            >
+              <Plus className="size-3" /> New category
+            </button>
+          </div>
           <select className="input" value={category} onChange={(e) => setCategory(e.target.value)}>
             <option value="">None</option>
             {categories.data?.map((c) => (
@@ -195,6 +206,9 @@ export default function KnowledgeEditor() {
         )}
         <MDEditor value={content} onChange={(v) => setContent(v ?? '')} height={560} preview="live" visibleDragbar={false} />
       </div>
+      {addingCategory && (
+        <CategoryForm category={null} onClose={() => setAddingCategory(false)} onSaved={(c) => setCategory(c.slug)} />
+      )}
       <p className="mt-2 text-xs text-ink-3">
         Tip: keep the "Symptoms / Likely causes / Steps / Escalate when" sections. Each section is embedded separately, so
         clear headings make the article easier to find.
