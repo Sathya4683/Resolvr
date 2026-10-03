@@ -24,11 +24,13 @@ class Settings(BaseSettings):
     llm_provider: str = "gemini"
     google_api_key: str = ""
     #drafting + chat
-    gemini_model_name: str = "gemini-3.8-flash"
-    #cheaper model for classification and the eval judge, empty means use the main one
-    gemini_fast_model_name: str = "gemini-3.5-flash-lite"
+    gemini_model_name: str = "gemini-3.6-flash"
+    #classification and the eval judge, empty means use the main one
+    gemini_fast_model_name: str = "gemini-3.5-flash"
+    #used for one more try when the main model answers "overloaded" (503/429)
+    gemini_fallback_model_name: str = "gemini-3.5-flash"
     llm_timeout_seconds: int = 60
-    llm_max_retries: int = 2
+    llm_max_retries: int = 1
     #usd per 1M tokens, only used for cost estimates on the dashboard
     llm_input_cost_per_1m: float = 0.75
     llm_output_cost_per_1m: float = 3.75

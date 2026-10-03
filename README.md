@@ -226,8 +226,10 @@ and small, so these numbers are optimistic compared with real tickets.
   retrieval numbers above are already near the ceiling. Both run locally, so the search side doesn't depend on any API.
 - **LLM behind a small interface.** `app/llm/` has `generate_json`, `generate_text` and `stream_text`. Gemini is one
   implementation and a fake one is used in tests. Switching to Claude means writing one more class.
-- **Two model sizes.** `gemini-3.8-flash` drafts resolutions and answers chat. `gemini-3.5-flash-lite` does the
-  classification and the eval judge: it's cheaper, faster, and on the free tier it has its own quota.
+- **Two models plus a fallback.** `gemini-3.6-flash` drafts resolutions and answers chat, and `gemini-3.5-flash` does
+  the classification and the eval judge (each model has its own free-tier quota). The newest models often answered
+  "503 overloaded" on the free tier, so a busy model gets one retry and then one try on `GEMINI_FALLBACK_MODEL_NAME`
+  before the app falls back to showing sources only.
 - **Structured output and citation guardrail.** The draft's JSON schema only allows citation ids from the retrieved set.
   `validate.py` still checks every citation, retries once, then strips anything unverifiable or abstains.
 - **No LangGraph.** The pipeline is linear with two branches (abstain and citation retry), and human review is just a
