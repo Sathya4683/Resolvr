@@ -58,7 +58,7 @@ def load(db: Session, ref: str) -> KbArticle:
 
 def check_category(db: Session, slug: str | None) -> None:
     if slug and find_category(db, slug) is None:
-        raise HTTPException(status.HTTP_422_UNPROCESSABLE_ENTITY, f"Unknown category '{slug}'")
+        raise HTTPException(status.HTTP_422_UNPROCESSABLE_CONTENT, f"Unknown category '{slug}'")
 
 
 @router.get("", response_model=list[KbArticleListItem])
@@ -137,7 +137,7 @@ def upload_markdown(
         title = match.group(1).strip() if match else (file.filename or "Untitled").rsplit(".", 1)[0]
         body = re.sub(r"^#\s+.+\n?", "", body, count=1, flags=re.M).strip()
     if len(body) < 20:
-        raise HTTPException(status.HTTP_422_UNPROCESSABLE_ENTITY, "The article is empty")
+        raise HTTPException(status.HTTP_422_UNPROCESSABLE_CONTENT, "The article is empty")
     check_category(db, meta.get("category"))
     article, _ = save_kb_article(
         db,

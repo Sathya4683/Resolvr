@@ -1,7 +1,7 @@
 from datetime import datetime, timezone
 from typing import Literal
 
-from fastapi import APIRouter, Depends, HTTPException, Query, status
+from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, Query, status
 from sqlalchemy import or_, select
 from sqlalchemy.orm import Session
 
@@ -11,7 +11,7 @@ from app.deps import agent_or_admin, any_user
 from app.models import Analysis, Feedback, Ticket, User
 from app.pipeline.analyze import run_analysis
 from app.schemas import FeedbackIn, ResolveIn, TicketCreate, TicketDetail, TicketListItem
-from app.services import audit
+from app.services import audit, notify
 from app.services import tickets as ticket_service
 
 router = APIRouter(tags=["tickets"])
@@ -25,7 +25,12 @@ def load_ticket(db: Session, ref: str) -> Ticket:
 
 
 @router.post("/tickets", response_model=TicketDetail, status_code=201)
-def create_ticket(body: TicketCreate, db: Session = Depends(get_db), user: User = Depends(agent_or_admin)):
+def create_ticket(
+    body: TicketCreate,
+    background: BackgroundTasks,
+    db: Session = Depends(get_db),
+    user: User = Depends(agent_or_admin),
+):
     """an agent pastes a complaint, we save it and run the full analysis straight away"""
     ticket = Ticket(
         complaint=body.complaint.strip(),
@@ -39,9 +44,12 @@ def create_ticket(body: TicketCreate, db: Session = Depends(get_db), user: User 
     )
     db.add(ticket)
     db.flush()
-    run_analysis(db, ticket, user)
+    analysis = run_analysis(db, ticket, user)
     audit.record(db, user, "ticket.create", "ticket", ticket.ref, severity=ticket.severity)
+    alerts = notify.after_analysis(db, ticket, analysis)
     db.commit()
+    #push + email go out after the response so the agent isn't kept waiting
+    background.add_task(notify.dispatch, alerts)
     db.refresh(ticket)
     return ticket_service.ticket_detail(db, ticket, user)
 
@@ -93,15 +101,19 @@ def get_ticket(ref: str, db: Session = Depends(get_db), user: User = Depends(any
 
 
 @router.post("/tickets/{ref}/reanalyze", response_model=TicketDetail)
-def reanalyze(ref: str, db: Session = Depends(get_db), user: User = Depends(agent_or_admin)):
+def reanalyze(
+    ref: str, background: BackgroundTasks, db: Session = Depends(get_db), user: User = Depends(agent_or_admin)
+):
     ticket = load_ticket(db, ref)
     if not ticket_service.can_edit(ticket, user):
         raise HTTPException(status.HTTP_403_FORBIDDEN, "Only the agent who raised this ticket can re-run it")
     if ticket.status == "resolved":
         raise HTTPException(status.HTTP_409_CONFLICT, "Ticket is already resolved")
-    run_analysis(db, ticket, user)
+    analysis = run_analysis(db, ticket, user)
     audit.record(db, user, "ticket.reanalyze", "ticket", ticket.ref)
+    alerts = notify.after_analysis(db, ticket, analysis)
     db.commit()
+    background.add_task(notify.dispatch, alerts)
     return ticket_service.ticket_detail(db, ticket, user)
 
 
@@ -120,7 +132,7 @@ def resolve(ref: str, body: ResolveIn, db: Session = Depends(get_db), user: User
     if not steps and analysis and analysis.review_status not in ticket_service.HIDDEN_FOR_AGENTS:
         steps = [s["text"] for s in ticket_service.visible_steps(analysis)]
     if not steps:
-        raise HTTPException(status.HTTP_422_UNPROCESSABLE_ENTITY, "Add the steps you took to resolve it")
+        raise HTTPException(status.HTTP_422_UNPROCESSABLE_CONTENT, "Add the steps you took to resolve it")
 
     ticket.resolution_steps = steps
     ticket.resolution_summary = body.summary or (analysis.parsed.get("summary") if analysis else None)

@@ -38,7 +38,7 @@ def add_resolved_ticket(body: ResolvedTicketIn, db: Session = Depends(get_db), a
     row = body.model_dump()
     report = import_resolved_tickets(db, [row], user=admin, source="admin")
     if report["errors"]:
-        raise HTTPException(status.HTTP_422_UNPROCESSABLE_ENTITY, report["errors"][0]["error"])
+        raise HTTPException(status.HTTP_422_UNPROCESSABLE_CONTENT, report["errors"][0]["error"])
     audit.record(db, admin, "data.add_ticket", "ticket", None, duplicate=bool(report["duplicates"]))
     db.commit()
     return ImportReport(**report)

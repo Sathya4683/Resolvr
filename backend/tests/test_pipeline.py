@@ -1,57 +1,13 @@
 """end to end analysis through the api, with the fake llm and fake embeddings"""
 
-import pytest
-
 from app.config import settings
 from app.llm import LLMError
 from app.llm.fake import FakeProvider
 from app.models import Category
 from app.pipeline.classify import active_categories, build_prompt
-from app.services.ingest import import_resolved_tickets, save_kb_article
+from tests.conftest import classify_response
 
 EVENING_DROPS = "My broadband drops every evening around 8 and I already restarted the router twice"
-
-
-def classify_response(**overrides):
-    data = {
-        "category": "broadband_disconnection", "product": "broadband", "severity": "high",
-        "critical_reason": "none", "sentiment": "frustrated", "language": "en", "in_scope": True,
-        "summary": "evening drops", "confidence": 0.9,
-    }
-    data.update(overrides)
-    return data
-
-
-@pytest.fixture(autouse=True)
-def reset_fake(monkeypatch):
-    FakeProvider.reset()
-    #bag-of-words test vectors give lower scores than the real model
-    monkeypatch.setattr(settings, "abstain_threshold", 0.05)
-    yield
-    FakeProvider.reset()
-
-
-@pytest.fixture
-def knowledge(db, users, categories):
-    import_resolved_tickets(
-        db,
-        [
-            {"complaint": "internet drops every evening, router restarted", "category": "broadband_disconnection",
-             "product": "broadband", "severity": "high", "sentiment": "frustrated",
-             "resolution_steps": "Changed wifi channel | Updated router firmware",
-             "resolution_summary": "wifi congestion"},
-            {"complaint": "bill has extra charges i did not ask for", "category": "billing_dispute",
-             "product": "billing", "severity": "medium", "sentiment": "angry",
-             "resolution_steps": "Explained pro-rata charge", "resolution_summary": "pro-rata"},
-        ],
-        user=users["admin"],
-    )
-    save_kb_article(
-        db, ref="KB-001", title="Broadband keeps disconnecting", user=users["admin"],
-        content_md="## Symptoms\nInternet drops in the evening.\n## Steps\n1. Restart the router.\n2. Check cables.",
-        category_slug="broadband_disconnection",
-    )
-    db.commit()
 
 
 def create(client, headers, complaint=EVENING_DROPS, role="support_agent"):

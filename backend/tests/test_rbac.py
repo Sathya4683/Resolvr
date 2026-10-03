@@ -19,6 +19,9 @@ ADMIN_ONLY = [
     ("get", "/v1/data/tickets/promotable"),
     ("post", "/v1/data/tickets/promote"),
     ("post", "/v1/kb/KB-001/archive"),
+    ("get", "/v1/approvals"),
+    ("get", "/v1/approvals/count"),
+    ("post", "/v1/approvals/1/decision"),
 ]
 
 #support agents can read the kb but must never write to it

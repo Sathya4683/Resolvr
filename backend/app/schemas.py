@@ -274,3 +274,51 @@ class PromotableTicket(BaseModel):
     steps: list[str]
     feedback: str | None
     analyst_verdict: str | None
+
+
+#---------------- approvals / notifications ----------------
+
+class StepIn(BaseModel):
+    text: str = Field(min_length=1, max_length=1000)
+    citations: list[str] = Field(default_factory=list, max_length=10)
+
+
+class DecisionIn(BaseModel):
+    action: Literal["approve", "edit", "reject"]
+    comment: str | None = Field(default=None, max_length=1000)
+    steps: list[StepIn] | None = Field(default=None, max_length=20)
+
+
+class ApprovalItem(BaseModel):
+    analysis_id: int
+    ticket_ref: str
+    subject: str | None
+    snippet: str
+    severity: str | None
+    critical_reason: str | None
+    category: str | None
+    raised_by: str | None
+    created_at: datetime
+    waiting_minutes: int
+    review_status: str
+    decided_by: str | None = None
+    decided_at: datetime | None = None
+    comment: str | None = None
+
+
+class NotificationOut(ORM):
+    id: int
+    kind: str
+    title: str
+    body: str | None
+    link: str | None
+    is_read: bool
+    created_at: datetime
+
+
+class ClientLogIn(BaseModel):
+    level: Literal["error", "warning", "info"] = "error"
+    message: str = Field(max_length=500)
+    path: str | None = Field(default=None, max_length=200)
+    source: str | None = Field(default=None, max_length=300)
+    line: int | None = None

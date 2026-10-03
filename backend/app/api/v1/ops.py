@@ -5,7 +5,9 @@ from fastapi.responses import JSONResponse
 from prometheus_client import CONTENT_TYPE_LATEST, generate_latest
 from sqlalchemy import text
 
+from app import metrics
 from app.db import SessionLocal
+from app.schemas import ClientLogIn
 
 router = APIRouter(tags=["ops"])
 log = logging.getLogger(__name__)
@@ -37,3 +39,14 @@ def ready():
 @router.get("/metrics", include_in_schema=False)
 def prometheus_metrics():
     return Response(generate_latest(), media_type=CONTENT_TYPE_LATEST)
+
+
+@router.post("/v1/client-logs", status_code=204, tags=["ops"])
+def client_log(body: ClientLogIn):
+    """the browser reports js errors here so they land in the same log pipeline (loki) as the api"""
+    metrics.CLIENT_ERRORS.inc()
+    log.warning(
+        "frontend error",
+        extra={"source": "frontend", "client_level": body.level, "error": body.message, "page": body.path,
+               "file": body.source, "line": body.line},
+    )
