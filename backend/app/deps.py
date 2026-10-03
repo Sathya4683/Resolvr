@@ -20,7 +20,7 @@ def get_current_user(
     try:
         payload = decode_access_token(creds.credentials)
     except jwt.PyJWTError:
-        raise HTTPException(status.HTTP_401_UNAUTHORIZED, "Session expired, please log in again")
+        raise HTTPException(status.HTTP_401_UNAUTHORIZED, "Session expired, please log in again") from None
 
     #sql: SELECT * FROM users WHERE id = :id
     user = db.get(User, int(payload["sub"]))

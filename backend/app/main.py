@@ -1,12 +1,14 @@
 import logging
+import threading
 import time
 import uuid
+from contextlib import asynccontextmanager
 
 from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 
-from app import metrics
+from app import embeddings, metrics
 from app.api.router import api_router
 from app.api.v1 import ops
 from app.config import settings
@@ -15,7 +17,18 @@ from app.logging_setup import request_id_var, setup_logging
 setup_logging("api", settings.log_level)
 log = logging.getLogger("resolvr.http")
 
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    #loading the embedding + reranker models takes a while, do it in the background so the
+    #api is up straight away and the first real request doesn't pay for it
+    if settings.environment != "test":
+        threading.Thread(target=embeddings.warm_up, daemon=True).start()
+    yield
+
+
 app = FastAPI(
+    lifespan=lifespan,
     title="Resolvr API",
     version="0.1.0",
     description="Semantic resolution assistant for a telecom support desk",

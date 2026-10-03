@@ -41,10 +41,11 @@ class Settings(BaseSettings):
     reranker_model: str = "BAAI/bge-reranker-base"
     #the laptop cpu has 4 performance cores, 8 threads was faster than using all 18
     torch_threads: int = 8
-    retrieval_candidates: int = 15
+    retrieval_candidates: int = 10
     retrieval_top_k: int = 6
-    #below this cosine similarity we don't trust the sources enough to draft anything
-    abstain_threshold: float = 0.60
+    #floor on the best cosine similarity, below it nothing in the history is close enough to use
+    #(calibrated on the eval set: in-scope complaints never went under ~0.64 with bge-base)
+    abstain_threshold: float = 0.55
 
     #comma separated list of severities that need an admin to sign off
     approval_severities: str = "critical"

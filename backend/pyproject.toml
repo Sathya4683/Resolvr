@@ -46,12 +46,16 @@ url = "https://download.pytorch.org/whl/cpu"
 explicit = true
 
 [tool.ruff]
-line-length = 110
+line-length = 120
 
 [tool.ruff.lint]
 select = ["E", "F", "I", "B"]
 #comments are written as "#like this" on purpose
-ignore = ["E265", "E262", "B008"]
+ignore = ["E265", "E262", "B008", "B905"]
+
+[tool.ruff.lint.per-file-ignores]
+#prompt text reads better without wrapping
+"app/pipeline/prompts.py" = ["E501"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]

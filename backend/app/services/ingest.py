@@ -13,9 +13,8 @@ from datetime import datetime, timezone
 from sqlalchemy import delete, select
 from sqlalchemy.orm import Session
 
-from app import metrics
+from app import embeddings, metrics
 from app.config import settings
-from app import embeddings
 from app.models import Category, KbArticle, KbChunk, Ticket, User
 from app.models.tickets import PRODUCTS, SENTIMENTS, SEVERITIES
 

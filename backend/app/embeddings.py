@@ -48,6 +48,17 @@ def get_reranker():
     return _reranker
 
 
+def warm_up() -> None:
+    """load the models up front (called in a background thread when the api starts)"""
+    try:
+        embed_query("warm up")
+        if settings.reranker_enabled:
+            rerank_scores("warm up", ["warm up"])
+        log.info("models ready")
+    except Exception:
+        log.exception("model warm up failed, they will load on first use")
+
+
 def embed_documents(texts: list[str], log_every: int = 64) -> list[list[float]]:
     if not texts:
         return []
