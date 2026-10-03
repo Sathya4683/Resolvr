@@ -87,7 +87,7 @@ def send_message(
     """
     session = load_session(db, session_id, user)
     question = body.content.strip()
-    system, messages, sources = chat_service.build_context(db, session, question)
+    system, messages, sources = chat_service.build_context(db, session, question, user)
     summary = chat_service.source_summary(sources)
 
     db.add(ChatMessage(session_id=session.id, role="user", content=question))
@@ -107,10 +107,14 @@ def send_message(
                     yield sse("token", chunk.text)
         except LLMError as exc:
             error = str(exc)[:200]
-            log.warning("chat answer failed", extra={"error": error})
-            fallback = "The assistant can't reach the language model right now. The closest sources are listed below."
-            parts = [fallback]
-            yield sse("token", fallback)
+            log.warning("chat answer failed", extra={"error": error, "partial": bool(parts)})
+            if parts:
+                #the model dropped out half way, keep what arrived and say so instead of gluing an error on
+                note = "\n\n_The answer was cut off because the model became unavailable. Ask again to get the rest._"
+            else:
+                note = "The assistant can't reach the language model right now. The closest sources are listed below."
+            parts.append(note)
+            yield sse("token", note)
 
         text = "".join(parts).strip()
         if usage:
