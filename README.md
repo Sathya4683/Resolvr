@@ -108,7 +108,7 @@ flowchart TD
     B --> C[Embed with bge-base]
     C --> D[Classify with Gemini<br/>live category list from the DB<br/>+ analyst notes on similar cases]
     D --> E[Escalate-only keyword rules<br/>legal, TRAI, SIM swap, refund...]
-    E --> F[Hybrid search: pgvector + Postgres full text<br/>merged with RRF, reranked by a cross-encoder]
+    E --> F[Hybrid search: pgvector + Postgres full text<br/>merged with RRF, past tickets reranked by a cross-encoder]
     F --> G{In scope and<br/>evidence strong enough?}
     G -- no --> H[Abstain: 'not enough evidence, escalate']
     G -- yes --> I[Draft steps with Gemini,<br/>citations limited to retrieved ids]
@@ -205,25 +205,33 @@ Results go to `backend/evals/results/report.md`:
 - citation validity, abstention correctness and LLM-judged groundedness
 - latency and cost
 
-Retrieval on the 44 in-scope held-out complaints. A hit means a ticket from the same scenario or the right KB article:
+Retrieval on the 44 in-scope held-out complaints. A hit means a ticket from the same scenario or the right KB article.
+The drafter sees all six sources, so "the right KB article is among them" is the number that matters most:
 
-| Mode | recall@1 | recall@5 | MRR |
-|---|---|---|---|
-| keyword only (Postgres full text) | 28/44 | 41/44 | 0.765 |
-| vector only (bge-base) | 40/44 | 43/44 | 0.938 |
-| hybrid (RRF) | 37/44 | 43/44 | 0.909 |
-| **hybrid + reranker** (used) | **41/44** | **44/44** | **0.953** |
+| Mode | recall@1 | recall@5 | MRR | right KB article in top 5 |
+|---|---|---|---|---|
+| keyword only (Postgres full text) | 29/44 | 41/44 | 0.778 | 37/44 |
+| vector only (bge-base) | 36/44 | 43/44 | 0.894 | 42/44 |
+| hybrid (RRF) | 38/44 | 43/44 | 0.920 | 43/44 |
+| **hybrid + reranker on past tickets** (used) | **38/44** | **43/44** | **0.920** | **43/44** |
 
-Semantic search clearly beats keyword search on paraphrased complaints. Plain RRF was a little worse than pure vector
-at rank 1, because keyword matches add noise at the top. The cross-encoder reranker fixes that. The data is synthetic
-and small, so these numbers are optimistic compared with real tickets.
+Semantic search clearly beats keyword search on paraphrased complaints.
+
+The first version reranked everything. That scored better at rank 1 (41/44), but the cross-encoder gives long,
+structured KB articles near-zero scores. The right article made it into the sources only 39/44 times, and in a
+real test it dropped the "payment deducted" article entirely, so the draft improvised. Now the reranker only orders
+past tickets (short and worded like complaints, which it's good at), while KB articles keep their fused rank and
+always take the first two slots. Rank-1 recall is a little lower because an article is always listed first. In
+exchange, the right article is almost always there, and search takes 0.46 s instead of 1.6 s.
+
+The data is synthetic and small, so these numbers are optimistic compared with real tickets.
 
 ## Design decisions
 
 - **Embedding model, measured.** I first tried `Qwen3-Embedding-0.6B` because it ranks higher on MTEB, but on a
   laptop CPU it embedded about 0.6 tickets per second, so seeding took around 15 minutes. `bge-base-en-v1.5` does
-  about 27 per second (seed in ~25 s, 20 ms per query), and with `bge-reranker-base` on the top 10 candidates the
-  retrieval numbers above are already near the ceiling. Both run locally, so the search side doesn't depend on any API.
+  about 27 per second (seed in ~25 s, 20 ms per query). `bge-reranker-base` re-orders the past-ticket candidates only
+  (see the evaluation section for why KB articles skip it). Both run locally, so the search side doesn't depend on any API.
 - **LLM behind a small interface.** `app/llm/` has `generate_json`, `generate_text` and `stream_text`. Gemini is one
   implementation and a fake one is used in tests. Switching to Claude means writing one more class.
 - **Two models plus a fallback.** `gemini-3.6-flash` drafts resolutions and answers chat, and `gemini-3.5-flash` does
@@ -272,7 +280,7 @@ and small, so these numbers are optimistic compared with real tickets.
 docker compose exec api pytest
 ```
 
-132 tests run against a separate `resolvr_test` database, with a fake LLM and a fake embedder so they are fast and
+136 tests run against a separate `resolvr_test` database, with a fake LLM and a fake embedder so they are fast and
 offline. They cover:
 - every pipeline branch: abstain, citation retry and strip, LLM down
 - the RBAC matrix: agents and analysts get 403 on every admin endpoint, and agents can't write to the KB

@@ -250,24 +250,30 @@ def hybrid_search(
         doc_words = set(WORD_RE.findall(src.rerank_text.lower()))
         src.matched_terms = [w for w in words if w in doc_words][:5]
 
-    if rerank and len(candidates) > 1:
-        scores = embeddings.rerank_scores(text, [c.rerank_text for c in candidates])
-        for src, score in zip(candidates, scores):
+    #candidates are in rrf order here
+    kb = [c for c in candidates if c.kind == "kb"]
+    tickets = [c for c in candidates if c.kind == "ticket"]
+
+    #the cross-encoder only re-orders past tickets. tickets are short and worded like complaints,
+    #which is what it's good at; long structured kb articles got near zero scores even when they
+    #were the right answer (e.g. a "payment deducted" article scored 0.002), so kb keeps its rrf rank
+    if rerank and len(tickets) > 1:
+        scores = embeddings.rerank_scores(text, [t.rerank_text for t in tickets])
+        for src, score in zip(tickets, scores):
             src.rerank_score = score
-        candidates.sort(key=lambda s: s.rerank_score, reverse=True)
+        tickets.sort(key=lambda s: s.rerank_score, reverse=True)
 
-    return pick_mix(candidates, top_k)
+    return pick_mix(kb, tickets, top_k)
 
 
-def pick_mix(ranked: list[Source], top_k: int, kb_slots: int = 2) -> list[Source]:
+def pick_mix(kb: list[Source], tickets: list[Source], top_k: int, kb_slots: int = 2) -> list[Source]:
     """
-    past tickets tend to win the ranking because they are short and worded like the complaint,
-    but the kb article has the official steps. keep the best `kb_slots` articles in the final list.
+    the best `kb_slots` help articles first (they have the official steps), then the best past tickets.
+    if there aren't enough tickets the free slots go to more articles.
     """
-    kb = [s for s in ranked if s.kind == "kb"][:kb_slots]
-    rest = [s for s in ranked if s not in kb][: top_k - len(kb)]
-    chosen = set(id(s) for s in kb + rest)
-    return [s for s in ranked if id(s) in chosen]
+    chosen_tickets = tickets[: top_k - min(kb_slots, len(kb))]
+    chosen_kb = kb[: top_k - len(chosen_tickets)]
+    return chosen_kb + chosen_tickets
 
 
 def reviewer_guidance(db: Session, qvec: list[float], limit: int = 3, min_similarity: float = 0.72) -> list[str]:

@@ -1,63 +1,63 @@
 {
-  "run_at": "2026-10-03 09:57",
+  "run_at": "2026-10-03 13:27",
   "rows": 48,
-  "model": "gemini-2.5-flash",
+  "model": "gemini-3.6-flash",
   "embedding_model": "BAAI/bge-base-en-v1.5",
   "reranker_model": "BAAI/bge-reranker-base",
   "retrieval": {
     "modes": {
       "keyword only": {
         "n": 44,
-        "recall@1": 28,
-        "recall@3": 39,
+        "recall@1": 29,
+        "recall@3": 40,
         "recall@5": 41,
-        "mrr": 0.765,
-        "kb_article_in_top5": 38,
-        "p50_ms": 15.7,
+        "mrr": 0.778,
+        "kb_article_in_top5": 37,
+        "p50_ms": 28.0,
         "top1_by_kind": {
-          "paraphrase": 25,
+          "paraphrase": 26,
           "brief_example": 1,
           "injection": 2
         }
       },
       "vector only": {
         "n": 44,
-        "recall@1": 40,
-        "recall@3": 42,
+        "recall@1": 36,
+        "recall@3": 43,
         "recall@5": 43,
-        "mrr": 0.938,
+        "mrr": 0.894,
         "kb_article_in_top5": 42,
-        "p50_ms": 17.2,
+        "p50_ms": 46.9,
         "top1_by_kind": {
-          "paraphrase": 38,
+          "paraphrase": 33,
           "brief_example": 1,
-          "injection": 1
+          "injection": 2
         }
       },
       "hybrid (rrf)": {
         "n": 44,
-        "recall@1": 37,
+        "recall@1": 38,
         "recall@3": 43,
         "recall@5": 43,
-        "mrr": 0.909,
+        "mrr": 0.92,
         "kb_article_in_top5": 43,
-        "p50_ms": 27.2,
+        "p50_ms": 70.2,
         "top1_by_kind": {
-          "paraphrase": 34,
+          "paraphrase": 35,
           "brief_example": 1,
           "injection": 2
         }
       },
       "hybrid + reranker": {
         "n": 44,
-        "recall@1": 41,
+        "recall@1": 38,
         "recall@3": 43,
-        "recall@5": 44,
-        "mrr": 0.953,
-        "kb_article_in_top5": 39,
-        "p50_ms": 1638.3,
+        "recall@5": 43,
+        "mrr": 0.92,
+        "kb_article_in_top5": 43,
+        "p50_ms": 456.3,
         "top1_by_kind": {
-          "paraphrase": 38,
+          "paraphrase": 35,
           "brief_example": 1,
           "injection": 2
         }
