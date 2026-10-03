@@ -9,6 +9,23 @@ ADMIN_ONLY = [
     ("get", "/v1/users"),
     ("post", "/v1/users"),
     ("patch", "/v1/users/1"),
+    ("post", "/v1/categories"),
+    ("patch", "/v1/categories/1"),
+    ("get", "/v1/categories/1/candidates"),
+    ("post", "/v1/categories/1/relabel"),
+    ("post", "/v1/data/tickets/import"),
+    ("post", "/v1/data/tickets"),
+    ("post", "/v1/data/kb/import"),
+    ("get", "/v1/data/tickets/promotable"),
+    ("post", "/v1/data/tickets/promote"),
+    ("post", "/v1/kb/KB-001/archive"),
+]
+
+#support agents can read the kb but must never write to it
+KB_WRITES = [
+    ("post", "/v1/kb"),
+    ("put", "/v1/kb/KB-001"),
+    ("post", "/v1/kb/upload"),
 ]
 
 
@@ -42,3 +59,9 @@ def test_admin_can_manage_users(client, headers):
 def test_admin_cannot_disable_self(client, headers, users):
     res = client.patch(f"/v1/users/{users['admin'].id}", headers=headers["admin"], json={"is_active": False})
     assert res.status_code == 400
+
+
+@pytest.mark.parametrize("method,path", KB_WRITES)
+def test_support_agent_cannot_write_kb(client, headers, method, path):
+    res = client.request(method, path, headers=headers["support_agent"], json={})
+    assert res.status_code == 403

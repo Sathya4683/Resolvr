@@ -165,3 +165,112 @@ class ResolveIn(BaseModel):
 class FeedbackIn(BaseModel):
     rating: Literal["up", "down"]
     comment: str | None = Field(default=None, max_length=1000)
+
+
+#---------------- taxonomy ----------------
+
+Severity = Literal["low", "medium", "high", "critical"]
+
+
+class CategoryOut(ORM):
+    id: int
+    slug: str
+    name: str
+    description: str
+    product: str | None
+    default_severity: str
+    is_active: bool
+    ticket_count: int = 0
+
+
+class CategoryCreate(BaseModel):
+    name: str = Field(min_length=2, max_length=120)
+    slug: str | None = Field(default=None, max_length=60, pattern=r"^[a-z0-9_]+$")
+    description: str = Field(min_length=10, max_length=1000)
+    product: Product | None = None
+    default_severity: Severity = "medium"
+
+
+class CategoryUpdate(BaseModel):
+    name: str | None = Field(default=None, min_length=2, max_length=120)
+    description: str | None = Field(default=None, min_length=10, max_length=1000)
+    product: Product | None = None
+    default_severity: Severity | None = None
+    is_active: bool | None = None
+
+
+class RelabelCandidate(BaseModel):
+    ref: str
+    subject: str | None
+    snippet: str
+    current_category: str | None
+    similarity: float
+
+
+class RelabelIn(BaseModel):
+    refs: list[str] = Field(min_length=1, max_length=200)
+
+
+#---------------- knowledge base ----------------
+
+class KbArticleIn(BaseModel):
+    title: str = Field(min_length=3, max_length=200)
+    content_md: str = Field(min_length=20, max_length=50_000)
+    product: Product | None = None
+    category_slug: str | None = None
+    tags: list[str] = Field(default_factory=list, max_length=20)
+
+
+class KbArticleListItem(BaseModel):
+    ref: str
+    title: str
+    product: str | None
+    category: CategoryBrief | None
+    tags: list[str]
+    status: str
+    version: int
+    updated_at: datetime
+    author: str | None
+    excerpt: str
+
+
+class KbArticleOut(KbArticleListItem):
+    content_md: str
+    chunks: int
+
+
+#---------------- data import ----------------
+
+class ImportReport(BaseModel):
+    inserted: int = 0
+    updated: int = 0
+    duplicates: int = 0
+    errors: list[dict] = Field(default_factory=list)
+
+
+class ResolvedTicketIn(BaseModel):
+    complaint: str = Field(min_length=5, max_length=4000)
+    subject: str | None = Field(default=None, max_length=200)
+    category: str
+    product: Product | None = None
+    severity: Severity
+    sentiment: Literal["angry", "frustrated", "neutral", "positive"] | None = None
+    resolution_steps: list[str] = Field(min_length=1, max_length=20)
+    resolution_summary: str | None = Field(default=None, max_length=1000)
+
+
+class PromoteIn(BaseModel):
+    refs: list[str] = Field(min_length=1, max_length=200)
+
+
+class PromotableTicket(BaseModel):
+    ref: str
+    subject: str | None
+    snippet: str
+    category: str | None
+    severity: str | None
+    resolved_at: datetime | None
+    resolved_by: str | None
+    steps: list[str]
+    feedback: str | None
+    analyst_verdict: str | None
