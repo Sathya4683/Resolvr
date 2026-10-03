@@ -216,3 +216,33 @@ export interface ChatMessage {
   created_at: string
   streaming?: boolean
 }
+
+export interface QueueItem {
+  analysis_id: number
+  ticket_ref: string
+  subject: string | null
+  snippet: string
+  severity: Severity | null
+  category: string | null
+  outcome: string
+  review_status: ReviewStatus
+  reasons: string[]
+  confidence: number | null
+  created_at: string
+  claimed_by: string | null
+  locked: boolean
+}
+
+export interface AnalystReview {
+  id: number
+  analysis_id: number
+  ticket_ref: string
+  analyst: string
+  verdict: 'correct' | 'partially_correct' | 'incorrect'
+  citations_ok: boolean
+  rubric: Record<string, boolean>
+  original_labels: Record<string, string | null>
+  corrected_labels: Record<string, string>
+  notes: string | null
+  created_at: string
+}

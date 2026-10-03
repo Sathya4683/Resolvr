@@ -46,7 +46,7 @@ export function SourceCard({ source, onOpen, cited }: { source: Source; onOpen: 
       onClick={onOpen}
       className="group flex w-full flex-col gap-2 rounded-xl border border-line bg-panel p-3.5 text-left transition hover:border-line-strong hover:bg-raised/50"
     >
-      <div className="flex items-center justify-between gap-3">
+      <div className="flex flex-wrap items-center justify-between gap-x-3 gap-y-1.5">
         <div className="flex min-w-0 items-center gap-2">
           <span
             className={clsx(

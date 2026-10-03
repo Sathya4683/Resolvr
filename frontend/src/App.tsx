@@ -16,6 +16,8 @@ import KnowledgeEditor from './pages/KnowledgeEditor'
 import Login from './pages/Login'
 import NewTicket from './pages/NewTicket'
 import Overview from './pages/Overview'
+import Quality from './pages/Quality'
+import Reviews from './pages/Reviews'
 import TicketDetail from './pages/TicketDetail'
 
 function RequireAuth({ roles, children }: { roles?: Role[]; children: ReactNode }) {
@@ -86,6 +88,8 @@ export default function App() {
         <Route path="data" element={<RequireAuth roles={['admin']}><DataImport /></RequireAuth>} />
         <Route path="users" element={<RequireAuth roles={['admin']}><Users /></RequireAuth>} />
         <Route path="audit" element={<RequireAuth roles={['admin']}><Audit /></RequireAuth>} />
+        <Route path="reviews" element={<RequireAuth roles={['analyst']}><Reviews /></RequireAuth>} />
+        <Route path="quality" element={<RequireAuth roles={['admin', 'analyst']}><Quality /></RequireAuth>} />
         <Route path="knowledge" element={<KnowledgeList />} />
         <Route path="knowledge/new" element={<RequireAuth roles={['admin', 'analyst']}><KnowledgeEditor /></RequireAuth>} />
         <Route path="knowledge/:ref" element={<KnowledgeArticle />} />
