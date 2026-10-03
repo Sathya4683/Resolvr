@@ -32,6 +32,8 @@ dev = [
     "ruff",
     "scikit-learn",
     "matplotlib",
+    "eralchemy>=1.7.0",
+    "graphviz>=0.21",
 ]
 
 [tool.uv]

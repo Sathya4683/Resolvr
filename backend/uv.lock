@@ -292,6 +292,18 @@ wheels = [
 ]
 
 [[package]]
+name = "eralchemy"
+version = "1.7.0"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "sqlalchemy" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/1b/cc/d41f21c662b244efedabac91705834c59dcf43b09e74dbc2b5ff32ea8b1c/eralchemy-1.7.0.tar.gz", hash = "sha256:926376fdab2e1ca8eec05698c457d17718ed1458fa574b67e815c43ae52b377a", size = 28591, upload-time = "2026-05-05T14:04:15.218Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/49/bd/6208c7735392ffb0179f8d9a4a07fb5ef893b4e1d9642605cbe7d0079a79/eralchemy-1.7.0-py3-none-any.whl", hash = "sha256:d53034cacb413c383ab214d242c7b111004095c2dcbdeb9d7d5e4c7c8a6c4000", size = 22095, upload-time = "2026-05-05T14:04:13.921Z" },
+]
+
+[[package]]
 name = "fastapi"
 version = "0.142.2"
 source = { registry = "https://pypi.org/simple" }
@@ -380,6 +392,15 @@ dependencies = [
 sdist = { url = "https://files.pythonhosted.org/packages/59/16/4af15d65cb72ebc21a99c5e64f09072e97334c05a48d4cede19c347e6ad2/google_genai-2.28.0.tar.gz", hash = "sha256:970cb2eaf1951949851c3e0a5b70265cfea8a408fb7361c7c980a84d90672bf2", size = 707359, upload-time = "2026-10-02T17:58:14.454Z" }
 wheels = [
     { url = "https://files.pythonhosted.org/packages/ad/4b/47278c34757293ba8d9156090d38e1c45fac9a47c50176acff7f77ae9a66/google_genai-2.28.0-py3-none-any.whl", hash = "sha256:cdee15e2fbfea08ea61bce6e5bfbb3301db4bd13a52dccfa8c8d1167e37ca1cc", size = 1168554, upload-time = "2026-10-02T17:58:12.585Z" },
+]
+
+[[package]]
+name = "graphviz"
+version = "0.21"
+source = { registry = "https://pypi.org/simple" }
+sdist = { url = "https://files.pythonhosted.org/packages/f8/b3/3ac91e9be6b761a4b30d66ff165e54439dcd48b83f4e20d644867215f6ca/graphviz-0.21.tar.gz", hash = "sha256:20743e7183be82aaaa8ad6c93f8893c923bd6658a04c32ee115edb3c8a835f78", size = 200434, upload-time = "2025-06-15T09:35:05.824Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/91/4c/e0ce1ef95d4000ebc1c11801f9b944fa5910ecc15b5e351865763d8657f8/graphviz-0.21-py3-none-any.whl", hash = "sha256:54f33de9f4f911d7e84e4191749cac8cc5653f815b06738c54db9a15ab8b1e42", size = 47300, upload-time = "2025-06-15T09:35:04.433Z" },
 ]
 
 [[package]]
@@ -1116,6 +1137,8 @@ dependencies = [
 
 [package.dev-dependencies]
 dev = [
+    { name = "eralchemy" },
+    { name = "graphviz" },
     { name = "matplotlib" },
     { name = "pytest" },
     { name = "ruff" },
@@ -1148,6 +1171,8 @@ requires-dist = [
 
 [package.metadata.requires-dev]
 dev = [
+    { name = "eralchemy", specifier = ">=1.7.0" },
+    { name = "graphviz", specifier = ">=0.21" },
     { name = "matplotlib" },
     { name = "pytest" },
     { name = "ruff" },

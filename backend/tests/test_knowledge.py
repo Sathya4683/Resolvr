@@ -139,3 +139,14 @@ def test_unknown_category_error_says_what_to_do(client, headers, categories):
                       json={"title": "Something new", "content_md": "## Steps\n1. Do the thing properly.",
                             "category_slug": "not_there_yet"})
     assert res.status_code == 422 and "Add it under Categories first" in res.json()["detail"]
+
+
+def test_analyst_can_promote_a_resolved_ticket(client, headers, categories, db):
+    ticket = client.post("/v1/tickets", headers=headers["support_agent"],
+                         json={"complaint": "dth channels missing after recharge"}).json()
+    client.post(f"/v1/tickets/{ticket['ref']}/resolve", headers=headers["support_agent"],
+                json={"steps": ["Sent a refresh command from CRM"]})
+    promotable = client.get("/v1/data/tickets/promotable", headers=headers["analyst"]).json()
+    assert ticket["ref"] in [p["ref"] for p in promotable]
+    res = client.post("/v1/data/tickets/promote", headers=headers["analyst"], json={"refs": [ticket["ref"]]})
+    assert res.json()["promoted"] == [ticket["ref"]]

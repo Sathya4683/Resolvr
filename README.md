@@ -143,8 +143,8 @@ which rules fired, sources and scores, draft, citation check, timings, tokens, c
   class (semantic search on the category description), for example a new *5G home router* class. Analysts can do
   this too.
 - Data imports: resolved tickets and KB articles from CSV. Imports are idempotent and return a per-row error report.
-  Agent-resolved tickets only become searchable after an admin promotes them, so a bad fix can't leak into future
-  answers.
+  Agent-resolved tickets only become searchable after an admin or analyst promotes them, so a bad fix can't leak into
+  future answers.
 - Overview dashboard, daily digest PDF (also emailed every evening), users and audit log.
 
 **Analyst**
@@ -154,8 +154,9 @@ which rules fired, sources and scores, draft, citation check, timings, tokens, c
   The note is stored with the complaint's embedding and injected as reviewer guidance when a similar complaint comes in.
 - Quality page and quality/evaluation PDF report.
 - Analysts are usually the first to notice a new kind of issue, so they can also add categories (with "find tickets"
-  and relabel) and write KB articles, including "+ New category" straight from the KB editor. Every change is
-  audit logged. The brief kept this admin-only, and I changed it on purpose.
+  and relabel), write KB articles (including "+ New category" straight from the KB editor) and add resolved tickets
+  to the knowledge pool (promote or import). Every change is audit logged. The brief kept this admin-only, and I
+  changed it on purpose.
 
 ## Severity and the approval rule
 
@@ -332,6 +333,7 @@ offline. They cover:
 
 ```
 backend/
+  scripts/er_diagram.py   draws the ER diagram from the models (ERAlchemy)
   app/
     api/v1/        routers (tickets, approvals, reviews, kb, categories, data, chat, reports, ...)
     pipeline/      pii, rules, classify, retrieve, draft, validate, outage, analyze

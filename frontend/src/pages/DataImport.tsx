@@ -137,7 +137,7 @@ export default function DataImport() {
       <Card className="mt-5">
         <CardHeader
           title="Tickets resolved in Resolvr"
-          subtitle="Agent-resolved tickets only become searchable after an admin adds them, so wrong fixes never leak into answers."
+          subtitle="Agent-resolved tickets only become searchable after an analyst or admin adds them, so wrong fixes never leak into answers."
           icon={<DatabaseZap className="size-4" />}
           action={
             <Button

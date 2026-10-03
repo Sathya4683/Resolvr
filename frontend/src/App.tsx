@@ -86,7 +86,7 @@ export default function App() {
         />
         <Route path="admin" element={<RequireAuth roles={['admin']}><Overview /></RequireAuth>} />
         <Route path="categories" element={<RequireAuth roles={['admin', 'analyst']}><Categories /></RequireAuth>} />
-        <Route path="data" element={<RequireAuth roles={['admin']}><DataImport /></RequireAuth>} />
+        <Route path="data" element={<RequireAuth roles={['admin', 'analyst']}><DataImport /></RequireAuth>} />
         <Route path="users" element={<RequireAuth roles={['admin']}><Users /></RequireAuth>} />
         <Route path="audit" element={<RequireAuth roles={['admin']}><Audit /></RequireAuth>} />
         <Route path="reviews" element={<RequireAuth roles={['analyst']}><Reviews /></RequireAuth>} />

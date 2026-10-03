@@ -9,11 +9,6 @@ ADMIN_ONLY = [
     ("get", "/v1/users"),
     ("post", "/v1/users"),
     ("patch", "/v1/users/1"),
-    ("post", "/v1/data/tickets/import"),
-    ("post", "/v1/data/tickets"),
-    ("post", "/v1/data/kb/import"),
-    ("get", "/v1/data/tickets/promotable"),
-    ("post", "/v1/data/tickets/promote"),
     ("post", "/v1/kb/KB-001/archive"),
     ("get", "/v1/approvals"),
     ("get", "/v1/approvals/count"),
@@ -26,6 +21,15 @@ CATEGORY_WRITES = [
     ("patch", "/v1/categories/1"),
     ("get", "/v1/categories/1/candidates"),
     ("post", "/v1/categories/1/relabel"),
+]
+
+#adding to the searchable knowledge is for analysts and admins, never support agents
+KNOWLEDGE_WRITES = [
+    ("post", "/v1/data/tickets/import"),
+    ("post", "/v1/data/tickets"),
+    ("post", "/v1/data/kb/import"),
+    ("get", "/v1/data/tickets/promotable"),
+    ("post", "/v1/data/tickets/promote"),
 ]
 
 #support agents can read the kb but must never write to it
@@ -76,5 +80,11 @@ def test_support_agent_cannot_write_kb(client, headers, method, path):
 
 @pytest.mark.parametrize("method,path", CATEGORY_WRITES)
 def test_support_agent_cannot_change_categories(client, headers, method, path):
+    res = client.request(method, path, headers=headers["support_agent"], json={})
+    assert res.status_code == 403
+
+
+@pytest.mark.parametrize("method,path", KNOWLEDGE_WRITES)
+def test_support_agent_cannot_add_knowledge(client, headers, method, path):
     res = client.request(method, path, headers=headers["support_agent"], json={})
     assert res.status_code == 403
