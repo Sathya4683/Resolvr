@@ -35,14 +35,16 @@ class Settings(BaseSettings):
     llm_min_interval_ms: int = 4000
 
     #embeddings + retrieval
-    embedding_model: str = "Qwen/Qwen3-Embedding-0.6B"
-    embedding_dim: int = 1024
+    embedding_model: str = "BAAI/bge-base-en-v1.5"
+    embedding_dim: int = 768
     reranker_enabled: bool = True
     reranker_model: str = "BAAI/bge-reranker-base"
-    retrieval_candidates: int = 20
+    #the laptop cpu has 4 performance cores, 8 threads was faster than using all 18
+    torch_threads: int = 8
+    retrieval_candidates: int = 15
     retrieval_top_k: int = 6
     #below this cosine similarity we don't trust the sources enough to draft anything
-    abstain_threshold: float = 0.45
+    abstain_threshold: float = 0.60
 
     #comma separated list of severities that need an admin to sign off
     approval_severities: str = "critical"

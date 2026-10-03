@@ -2,13 +2,20 @@ import argparse
 import logging
 
 from app.config import settings
+from app.db import SessionLocal
 from app.logging_setup import setup_logging
 
 log = logging.getLogger("resolvr.cli")
 
 
 def cmd_seed(args):
-    log.info("nothing to seed yet")
+    from app.services.seed import run_seed
+
+    if not settings.auto_seed and args.if_empty:
+        log.info("AUTO_SEED is off, skipping")
+        return
+    with SessionLocal() as db:
+        run_seed(db, if_empty=args.if_empty)
 
 
 def main():
