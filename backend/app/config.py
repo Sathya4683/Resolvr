@@ -27,15 +27,15 @@ class Settings(BaseSettings):
     gemini_model_name: str = "gemini-3.6-flash"
     #classification and the eval judge, empty means use the main one
     gemini_fast_model_name: str = "gemini-3.5-flash"
-    #used for one more try when the main model answers "overloaded" (503/429)
-    gemini_fallback_model_name: str = "gemini-3.5-flash"
+    #comma separated, tried in order when a model answers "overloaded" (503/429)
+    gemini_fallback_model_name: str = "gemini-3.5-flash,gemini-3.7-flash"
     llm_timeout_seconds: int = 60
     llm_max_retries: int = 1
     #usd per 1M tokens, only used for cost estimates on the dashboard
     llm_input_cost_per_1m: float = 0.75
     llm_output_cost_per_1m: float = 3.75
     #gap between rows in batch jobs / evals so we stay under the free tier requests-per-minute limit
-    llm_min_interval_ms: int = 6000
+    llm_min_interval_ms: int = 13000
 
     #embeddings + retrieval
     embedding_model: str = "BAAI/bge-base-en-v1.5"

@@ -172,7 +172,8 @@ def run_analysis(db: Session, ticket: Ticket, user: User | None) -> Analysis:
     if labels["category"]:
         #sql: SELECT * FROM categories WHERE slug = :slug
         category = db.scalar(select(Category).where(Category.slug == labels["category"]))
-    ticket.category_id = category.id if category else None
+    #set the relationship (not just the id) so the ticket we return straight away shows the new category
+    ticket.category = category
     ticket.product = labels["product"] or (category.product if category else None)
     ticket.severity = severity
     ticket.critical_reason = critical_reason

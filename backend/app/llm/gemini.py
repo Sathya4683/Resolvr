@@ -36,7 +36,8 @@ class GeminiProvider:
         )
         self.model = settings.gemini_model_name
         self.fast_model = settings.gemini_fast_model_name or self.model
-        self.fallback_model = settings.gemini_fallback_model_name
+        #comma separated list, tried in order
+        self.fallback_models = [m.strip() for m in settings.gemini_fallback_model_name.split(",") if m.strip()]
 
     def _thinking(self, model: str):
         """
@@ -76,16 +77,17 @@ class GeminiProvider:
     def _with_fallback(self, model: str, call):
         """
         runs call(model). if google says the model is overloaded (it happens a lot on the free tier
-        for the newest models) we try once more on the fallback model instead of failing the request
+        for the newest models) we go down the fallback list instead of failing the request
         """
-        try:
-            return call(model), model
-        except self.errors.APIError as exc:
-            if exc.code not in BUSY_CODES or not self.fallback_model or self.fallback_model == model:
-                raise
-            log.warning("model busy, using fallback", extra={"model": model, "fallback": self.fallback_model,
-                                                             "code": exc.code})
-            return call(self.fallback_model), self.fallback_model
+        candidates = [model] + [m for m in self.fallback_models if m != model]
+        for i, current in enumerate(candidates):
+            try:
+                return call(current), current
+            except self.errors.APIError as exc:
+                if exc.code not in BUSY_CODES or i == len(candidates) - 1:
+                    raise
+                log.warning("model busy, trying the next one",
+                            extra={"model": current, "next": candidates[i + 1], "code": exc.code})
 
     def generate_json(self, system: str, prompt: str, schema: dict, fast: bool = False) -> LLMResult:
         start = time.perf_counter()
