@@ -29,14 +29,23 @@ class GeminiProvider:
         self.model = settings.gemini_model_name
         self.fast_model = settings.gemini_fast_model_name or self.model
 
+    def _thinking(self, model: str):
+        """
+        these are short structured tasks, so we keep the model's "thinking" as low as it goes.
+        gemini 2.5 used a token budget (0 = off), gemini 3 uses a level and can't be fully turned off
+        """
+        if model.startswith("gemini-2.5"):
+            return self.types.ThinkingConfig(thinking_budget=0) if "flash" in model else None
+        return self.types.ThinkingConfig(thinking_level="minimal" if "lite" in model else "low")
+
     def _config(self, model: str, system: str, schema: dict | None = None):
         kwargs = {"system_instruction": system, "temperature": 0.2, "max_output_tokens": 4096}
         if schema:
             kwargs["response_mime_type"] = "application/json"
             kwargs["response_json_schema"] = schema
-        #flash models can skip "thinking", which makes them a lot faster for these short tasks
-        if "flash" in model:
-            kwargs["thinking_config"] = self.types.ThinkingConfig(thinking_budget=0)
+        thinking = self._thinking(model)
+        if thinking:
+            kwargs["thinking_config"] = thinking
         return self.types.GenerateContentConfig(**kwargs)
 
     def _contents(self, messages: list[dict]):

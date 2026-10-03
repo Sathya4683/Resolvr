@@ -23,16 +23,17 @@ class Settings(BaseSettings):
     #llm
     llm_provider: str = "gemini"
     google_api_key: str = ""
-    gemini_model_name: str = "gemini-2.5-flash"
-    #optional cheaper model for classification, falls back to the main one
-    gemini_fast_model_name: str = ""
+    #drafting + chat
+    gemini_model_name: str = "gemini-3.8-flash"
+    #cheaper model for classification and the eval judge, empty means use the main one
+    gemini_fast_model_name: str = "gemini-3.5-flash-lite"
     llm_timeout_seconds: int = 60
     llm_max_retries: int = 2
     #usd per 1M tokens, only used for cost estimates on the dashboard
-    llm_input_cost_per_1m: float = 0.30
-    llm_output_cost_per_1m: float = 2.50
-    #small gap between llm calls in batch jobs so we stay under free tier limits
-    llm_min_interval_ms: int = 4000
+    llm_input_cost_per_1m: float = 0.75
+    llm_output_cost_per_1m: float = 3.75
+    #gap between rows in batch jobs / evals so we stay under the free tier requests-per-minute limit
+    llm_min_interval_ms: int = 6000
 
     #embeddings + retrieval
     embedding_model: str = "BAAI/bge-base-en-v1.5"
