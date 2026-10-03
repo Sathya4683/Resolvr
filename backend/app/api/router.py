@@ -10,6 +10,7 @@ from app.api.v1 import (
     data,
     knowledge,
     notifications,
+    reports,
     reviews,
     tickets,
     users,
@@ -28,3 +29,4 @@ api_router.include_router(batch.router)
 api_router.include_router(chat.router)
 api_router.include_router(admin.router)
 api_router.include_router(reviews.router)
+api_router.include_router(reports.router)

@@ -16,6 +16,7 @@ from app import metrics
 from app.config import settings
 from app.db import SessionLocal
 from app.logging_setup import setup_logging
+from app.services import digest
 from app.services.jobs import alert_overdue_reviews, claim_next_job, process_job
 
 log = logging.getLogger("resolvr.worker")
@@ -40,6 +41,15 @@ def start_scheduler() -> BackgroundScheduler:
     scheduler.add_job(
         run_scheduled, "interval", minutes=5, args=["overdue_reviews", alert_overdue_reviews], id="overdue_reviews"
     )
+    #the daily digest email, at DIGEST_HOUR:DIGEST_MINUTE in the app timezone
+    scheduler.add_job(
+        run_scheduled,
+        "cron",
+        hour=settings.digest_hour,
+        minute=settings.digest_minute,
+        args=["daily_digest", digest.send_today],
+        id="daily_digest",
+    )
     scheduler.start()
     return scheduler
 
@@ -52,6 +62,7 @@ def main() -> None:
     start_http_server(9101)
     scheduler = start_scheduler()
     log.info("worker started", extra={"jobs": [j.id for j in scheduler.get_jobs()]})
+    run_scheduled("digest_catch_up", digest.catch_up)
 
     while running:
         try:

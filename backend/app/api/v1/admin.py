@@ -25,18 +25,18 @@ def overview(days: int = Query(default=7, ge=1, le=60), db: Session = Depends(ge
     since = local_midnight(days - 1)
     tz = settings.app_timezone
 
-    # sql: SELECT count(*) FROM tickets WHERE created_at >= :today
+    #sql: SELECT count(*) FROM tickets WHERE created_at >= :today
     created_today = db.scalar(select(func.count(Ticket.id)).where(Ticket.created_at >= today))
-    # sql: SELECT count(*) FROM tickets WHERE resolved_at >= :today
+    #sql: SELECT count(*) FROM tickets WHERE resolved_at >= :today
     resolved_today = db.scalar(select(func.count(Ticket.id)).where(Ticket.resolved_at >= today))
-    # sql: SELECT count(*) FROM analyses WHERE review_status = 'pending_review'
+    #sql: SELECT count(*) FROM analyses WHERE review_status = 'pending_review'
     pending = db.scalar(select(func.count(Analysis.id)).where(Analysis.review_status == "pending_review"))
-    # sql: SELECT count(*) FROM tickets WHERE is_searchable = true
+    #sql: SELECT count(*) FROM tickets WHERE is_searchable = true
     searchable = db.scalar(select(func.count(Ticket.id)).where(Ticket.is_searchable.is_(True)))
-    # sql: SELECT count(*) FROM kb_articles WHERE status = 'published'
+    #sql: SELECT count(*) FROM kb_articles WHERE status = 'published'
     kb_count = db.scalar(select(func.count(KbArticle.id)).where(KbArticle.status == "published"))
 
-    # sql: SELECT count(*), count(*) FILTER (WHERE outcome = 'abstained'), avg(latency_ms),
+    #sql: SELECT count(*), count(*) FILTER (WHERE outcome = 'abstained'), avg(latency_ms),
     #            sum(prompt_tokens + completion_tokens), sum(cost_usd)
     #     FROM analyses WHERE created_at >= :since
     stats = db.execute(
@@ -49,20 +49,20 @@ def overview(days: int = Query(default=7, ge=1, le=60), db: Session = Depends(ge
         ).where(Analysis.created_at >= since)
     ).one()
 
-    # sql: SELECT count(*) FILTER (WHERE rating = 'up'), count(*) FROM feedback WHERE created_at >= :since
+    #sql: SELECT count(*) FILTER (WHERE rating = 'up'), count(*) FROM feedback WHERE created_at >= :since
     up, total_feedback = db.execute(
         select(func.count(Feedback.id).filter(Feedback.rating == "up"), func.count(Feedback.id)).where(
             Feedback.created_at >= since
         )
     ).one()
 
-    # sql: SELECT count(*) FILTER (WHERE verdict = 'correct'), count(*) FROM analyst_reviews
+    #sql: SELECT count(*) FILTER (WHERE verdict = 'correct'), count(*) FROM analyst_reviews
     correct, reviewed = db.execute(
         select(func.count(AnalystReview.id).filter(AnalystReview.verdict == "correct"), func.count(AnalystReview.id))
     ).one()
 
     day = func.date(func.timezone(tz, Ticket.created_at))
-    # sql: SELECT date(timezone(:tz, created_at)) AS day, severity, count(*) FROM tickets
+    #sql: SELECT date(timezone(:tz, created_at)) AS day, severity, count(*) FROM tickets
     #     WHERE created_at >= :since GROUP BY day, severity ORDER BY day
     per_day: dict[str, dict] = {}
     for d, severity, n in db.execute(
@@ -75,7 +75,7 @@ def overview(days: int = Query(default=7, ge=1, le=60), db: Session = Depends(ge
         if severity in row:
             row[severity] = n
 
-    # sql: SELECT categories.name, count(tickets.id) FROM tickets JOIN categories ON ...
+    #sql: SELECT categories.name, count(tickets.id) FROM tickets JOIN categories ON ...
     #     WHERE tickets.created_at >= :since GROUP BY categories.name ORDER BY count DESC LIMIT 8
     categories = [
         {"name": name, "count": n}
@@ -89,7 +89,7 @@ def overview(days: int = Query(default=7, ge=1, le=60), db: Session = Depends(ge
         )
     ]
 
-    # sql: SELECT sentiment, count(*) FROM tickets WHERE created_at >= :since GROUP BY sentiment
+    #sql: SELECT sentiment, count(*) FROM tickets WHERE created_at >= :since GROUP BY sentiment
     sentiment = {
         s or "unknown": n
         for s, n in db.execute(
@@ -97,7 +97,7 @@ def overview(days: int = Query(default=7, ge=1, le=60), db: Session = Depends(ge
         )
     }
 
-    # sql: SELECT outcome, count(*) FROM analyses WHERE created_at >= :since GROUP BY outcome
+    #sql: SELECT outcome, count(*) FROM analyses WHERE created_at >= :since GROUP BY outcome
     outcomes = dict(
         db.execute(
             select(Analysis.outcome, func.count(Analysis.id))
@@ -137,7 +137,7 @@ def audit_log(
     db: Session = Depends(get_db),
     _: User = Depends(admin_only),
 ):
-    # sql: SELECT * FROM audit_logs WHERE action LIKE :action || '%' ORDER BY id DESC LIMIT :limit
+    #sql: SELECT * FROM audit_logs WHERE action LIKE :action || '%' ORDER BY id DESC LIMIT :limit
     stmt = select(AuditLog).order_by(AuditLog.id.desc()).limit(limit)
     if action:
         stmt = stmt.where(AuditLog.action.like(f"{action}%"))
@@ -159,29 +159,29 @@ def audit_log(
 @router.get("/quality/summary")
 def quality_summary(db: Session = Depends(get_db), _: User = Depends(analyst_or_admin)):
     """numbers for the quality page, analysts and admins both see it"""
-    # sql: SELECT verdict, count(*) FROM analyst_reviews GROUP BY verdict
+    #sql: SELECT verdict, count(*) FROM analyst_reviews GROUP BY verdict
     verdicts = dict(
         db.execute(select(AnalystReview.verdict, func.count(AnalystReview.id)).group_by(AnalystReview.verdict)).all()
     )
-    # sql: SELECT count(*) FILTER (WHERE citations_ok), count(*) FROM analyst_reviews
+    #sql: SELECT count(*) FILTER (WHERE citations_ok), count(*) FROM analyst_reviews
     cites_ok, total = db.execute(
         select(func.count(AnalystReview.id).filter(AnalystReview.citations_ok.is_(True)), func.count(AnalystReview.id))
     ).one()
-    # sql: SELECT rating, count(*) FROM feedback GROUP BY rating
+    #sql: SELECT rating, count(*) FROM feedback GROUP BY rating
     feedback = dict(db.execute(select(Feedback.rating, func.count(Feedback.id)).group_by(Feedback.rating)).all())
-    # sql: SELECT review_status, count(*) FROM analyses GROUP BY review_status
+    #sql: SELECT review_status, count(*) FROM analyses GROUP BY review_status
     review = dict(
         db.execute(select(Analysis.review_status, func.count(Analysis.id)).group_by(Analysis.review_status)).all()
     )
 
-    # per field agreement: a label counts as agreed when the analyst didn't correct it
+    #per field agreement: a label counts as agreed when the analyst didn't correct it
     fields = ("category", "product", "severity", "sentiment")
     agreement = {}
     rows = db.scalars(select(AnalystReview.corrected_labels)).all()
     for f in fields:
         agreement[f] = (sum(1 for r in rows if f not in (r or {})) / len(rows)) if rows else None
 
-    # sql: SELECT categories.name, count(*), count(*) FILTER (WHERE verdict = 'correct')
+    #sql: SELECT categories.name, count(*), count(*) FILTER (WHERE verdict = 'correct')
     #     FROM analyst_reviews JOIN analyses ... JOIN tickets ... JOIN categories ... GROUP BY categories.name
     by_category = [
         {"category": name, "reviews": n, "correct": c}

@@ -17,6 +17,7 @@ import Login from './pages/Login'
 import NewTicket from './pages/NewTicket'
 import Overview from './pages/Overview'
 import Quality from './pages/Quality'
+import Reports from './pages/Reports'
 import Reviews from './pages/Reviews'
 import TicketDetail from './pages/TicketDetail'
 
@@ -90,6 +91,7 @@ export default function App() {
         <Route path="audit" element={<RequireAuth roles={['admin']}><Audit /></RequireAuth>} />
         <Route path="reviews" element={<RequireAuth roles={['analyst']}><Reviews /></RequireAuth>} />
         <Route path="quality" element={<RequireAuth roles={['admin', 'analyst']}><Quality /></RequireAuth>} />
+        <Route path="reports" element={<RequireAuth roles={['admin', 'analyst']}><Reports /></RequireAuth>} />
         <Route path="knowledge" element={<KnowledgeList />} />
         <Route path="knowledge/new" element={<RequireAuth roles={['admin', 'analyst']}><KnowledgeEditor /></RequireAuth>} />
         <Route path="knowledge/:ref" element={<KnowledgeArticle />} />
