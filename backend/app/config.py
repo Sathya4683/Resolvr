@@ -1,0 +1,105 @@
+from functools import lru_cache
+
+from pydantic_settings import BaseSettings, SettingsConfigDict
+
+
+class Settings(BaseSettings):
+    #every value can be overridden from the environment (see .env.example)
+    model_config = SettingsConfigDict(extra="ignore")
+
+    app_name: str = "Resolvr"
+    environment: str = "dev"
+    log_level: str = "INFO"
+    app_timezone: str = "Asia/Kolkata"
+    frontend_url: str = "http://localhost:5174"
+    cors_origins: str = "http://localhost:5174"
+
+    database_url: str = "postgresql+psycopg2://resolvr:resolvr@db:5432/resolvr"
+    redis_url: str = "redis://redis:6379/0"
+
+    jwt_secret: str = "dev-only-secret"
+    jwt_expire_minutes: int = 600
+
+    #llm
+    llm_provider: str = "gemini"
+    google_api_key: str = ""
+    gemini_model_name: str = "gemini-2.5-flash"
+    #optional cheaper model for classification, falls back to the main one
+    gemini_fast_model_name: str = ""
+    llm_timeout_seconds: int = 60
+    llm_max_retries: int = 2
+    #usd per 1M tokens, only used for cost estimates on the dashboard
+    llm_input_cost_per_1m: float = 0.30
+    llm_output_cost_per_1m: float = 2.50
+    #small gap between llm calls in batch jobs so we stay under free tier limits
+    llm_min_interval_ms: int = 4000
+
+    #embeddings + retrieval
+    embedding_model: str = "Qwen/Qwen3-Embedding-0.6B"
+    embedding_dim: int = 1024
+    reranker_enabled: bool = True
+    reranker_model: str = "BAAI/bge-reranker-base"
+    retrieval_candidates: int = 20
+    retrieval_top_k: int = 6
+    #below this cosine similarity we don't trust the sources enough to draft anything
+    abstain_threshold: float = 0.45
+
+    #comma separated list of severities that need an admin to sign off
+    approval_severities: str = "critical"
+    review_sla_minutes: int = 30
+
+    #outage detector
+    outage_window_minutes: int = 60
+    outage_min_count: int = 4
+    outage_similarity: float = 0.80
+
+    #notifications
+    ntfy_base_url: str = "https://ntfy.sh"
+    ntfy_admin_topic: str = ""
+    ntfy_agent_topic: str = ""
+    ntfy_token: str = ""
+
+    smtp_host: str = "mailpit"
+    smtp_port: int = 1025
+    smtp_username: str = ""
+    smtp_password: str = ""
+    smtp_from: str = "Resolvr <reports@resolvr.local>"
+    smtp_use_tls: bool = False
+    admin_emails: str = ""
+
+    #daily digest (local time in app_timezone)
+    digest_hour: int = 21
+    digest_minute: int = 0
+
+    #limits
+    max_complaint_chars: int = 4000
+    max_csv_rows: int = 200
+    max_upload_mb: int = 2
+    rate_limit_analyze_per_min: int = 20
+    rate_limit_chat_per_min: int = 30
+    rate_limit_batch_per_min: int = 3
+    rate_limit_default_per_min: int = 240
+
+    webhook_secret: str = ""
+    seed_user_password: str = "resolvr123"
+    auto_seed: bool = True
+
+    @property
+    def approval_severity_list(self) -> list[str]:
+        return [s.strip() for s in self.approval_severities.split(",") if s.strip()]
+
+    @property
+    def admin_email_list(self) -> list[str]:
+        return [e.strip() for e in self.admin_emails.split(",") if e.strip()]
+
+    @property
+    def cors_origin_list(self) -> list[str]:
+        return [o.strip() for o in self.cors_origins.split(",") if o.strip()]
+
+
+@lru_cache
+def get_settings() -> Settings:
+    return Settings()
+
+
+settings = get_settings()

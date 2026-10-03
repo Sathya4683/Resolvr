@@ -1,0 +1,32 @@
+# personal notes, not part of the project
+docs/
+usecase.md
+requirements.md
+.claude/
+CLAUDE.md
+
+# secrets
+.env
+.env.local
+
+# python
+__pycache__/
+*.pyc
+.venv/
+venv/
+.pytest_cache/
+.ruff_cache/
+.mypy_cache/
+*.egg-info/
+build/
+
+# node
+node_modules/
+dist/
+*.tsbuildinfo
+
+# misc
+.DS_Store
+.idea/
+.vscode/
+*.log

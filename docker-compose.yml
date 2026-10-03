@@ -1,0 +1,84 @@
+name: resolvr
+
+#shared settings for the api and the worker (same image, different command)
+x-backend: &backend
+  build:
+    context: .
+    dockerfile: docker/api.Dockerfile
+  image: resolvr-api:dev
+  env_file: .env
+  environment:
+    DATABASE_URL: postgresql+psycopg2://${POSTGRES_USER:-resolvr}:${POSTGRES_PASSWORD:-resolvr}@db:5432/${POSTGRES_DB:-resolvr}
+    TEST_DATABASE_URL: postgresql+psycopg2://${POSTGRES_USER:-resolvr}:${POSTGRES_PASSWORD:-resolvr}@db:5432/resolvr_test
+    DATA_DIR: /data
+  volumes:
+    - ./backend:/app
+    - ./data:/data:ro
+    - model_cache:/models
+  restart: unless-stopped
+
+services:
+  db:
+    image: pgvector/pgvector:pg16
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-resolvr}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-resolvr}
+      POSTGRES_DB: ${POSTGRES_DB:-resolvr}
+    #log slow queries so they show up in loki
+    command: >
+      postgres
+      -c log_min_duration_statement=250
+      -c log_line_prefix='%m [%p] %u@%d '
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+      - ./docker/postgres/init.sql:/docker-entrypoint-initdb.d/init.sql:ro
+    ports:
+      - "127.0.0.1:5434:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+    restart: unless-stopped
+
+  redis:
+    image: redis:7-alpine
+    command: redis-server --save "" --appendonly no
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+    restart: unless-stopped
+
+  api:
+    <<: *backend
+    #migrate, load the demo data on first run, then serve with hot reload
+    command: >
+      sh -c "alembic upgrade head &&
+             python -m app.cli seed --if-empty &&
+             uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload --reload-dir app --no-access-log"
+    ports:
+      - "8001:8000"
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000/health')"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      #first boot downloads the embedding models, give it time
+      start_period: 600s
+
+  mailpit:
+    image: axllent/mailpit:latest
+    ports:
+      - "127.0.0.1:8026:8025"
+    restart: unless-stopped
+
+volumes:
+  pgdata:
+  model_cache:

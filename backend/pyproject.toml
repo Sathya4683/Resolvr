@@ -1,0 +1,57 @@
+[project]
+name = "resolvr-api"
+version = "0.1.0"
+description = "Support ticket resolution assistant for a telecom help desk"
+requires-python = ">=3.12,<3.13"
+dependencies = [
+    "fastapi",
+    "uvicorn[standard]",
+    "sqlalchemy>=2.0",
+    "psycopg2-binary",
+    "alembic",
+    "pgvector",
+    "pydantic-settings",
+    "pyjwt",
+    "bcrypt",
+    "python-multipart",
+    "httpx",
+    "tenacity",
+    "redis",
+    "prometheus-client",
+    "google-genai",
+    "sentence-transformers",
+    "torch",
+    "reportlab",
+    "apscheduler>=3.10,<4",
+    "langsmith",
+]
+
+[dependency-groups]
+dev = [
+    "pytest",
+    "ruff",
+    "scikit-learn",
+    "matplotlib",
+]
+
+[tool.uv]
+package = false
+
+[tool.uv.sources]
+torch = [{ index = "pytorch-cpu" }]
+
+[[tool.uv.index]]
+name = "pytorch-cpu"
+url = "https://download.pytorch.org/whl/cpu"
+explicit = true
+
+[tool.ruff]
+line-length = 110
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "B"]
+#comments are written as "#like this" on purpose
+ignore = ["E265", "E262", "B008"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
