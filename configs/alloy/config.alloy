@@ -1,0 +1,82 @@
+// grafana alloy collects the logs of every container in this compose project and ships them to loki.
+// (promtail reached end of life, alloy is its replacement)
+
+discovery.docker "containers" {
+  host = "unix:///var/run/docker.sock"
+}
+
+discovery.relabel "containers" {
+  targets = discovery.docker.containers.targets
+
+  // only our own project, not other containers running on the laptop
+  rule {
+    source_labels = ["__meta_docker_container_label_com_docker_compose_project"]
+    regex         = "resolvr"
+    action        = "keep"
+  }
+
+  // compose service name (api, worker, db, frontend...) is the main label we query by
+  rule {
+    source_labels = ["__meta_docker_container_label_com_docker_compose_service"]
+    target_label  = "service"
+  }
+
+  rule {
+    source_labels = ["__meta_docker_container_name"]
+    regex         = "/(.*)"
+    target_label  = "container"
+  }
+}
+
+// only the containers that survived the relabel rules above get tailed
+loki.source.docker "containers" {
+  host       = "unix:///var/run/docker.sock"
+  targets    = discovery.relabel.containers.output
+  forward_to = [loki.process.parse.receiver]
+}
+
+loki.process "parse" {
+  // api and worker write json lines, pull the level out so it can be used as a label
+  stage.match {
+    selector = "{service=~\"api|worker\"}"
+
+    stage.json {
+      expressions = { level = "level", request_id = "request_id" }
+    }
+
+    stage.labels {
+      values = { level = "" }
+    }
+
+    // request id is useful for searching but would explode the label count, keep it as metadata
+    stage.structured_metadata {
+      values = { request_id = "" }
+    }
+  }
+
+  // postgres lines look like "... ERROR: ..." or "... LOG: duration: 312 ms ..."
+  stage.match {
+    selector = "{service=\"db\"}"
+
+    stage.regex {
+      expression = "(?P<pglevel>LOG|ERROR|WARNING|FATAL|PANIC):"
+    }
+
+    stage.template {
+      source   = "level"
+      template = "{{ if eq .pglevel \"LOG\" }}info{{ else if eq .pglevel \"WARNING\" }}warning{{ else if .pglevel }}error{{ end }}"
+    }
+
+    stage.labels {
+      values = { level = "" }
+    }
+  }
+
+  forward_to = [loki.write.local.receiver]
+}
+
+loki.write "local" {
+  endpoint {
+    url = "http://loki:3100/loki/api/v1/push"
+  }
+}
