@@ -6,6 +6,7 @@ import { EmptyState } from './components/ui'
 import { homePath, useAuth } from './lib/auth'
 import type { Role } from './lib/types'
 import Approvals from './pages/Approvals'
+import Batch from './pages/Batch'
 import Login from './pages/Login'
 import NewTicket from './pages/NewTicket'
 import TicketDetail from './pages/TicketDetail'
@@ -49,6 +50,14 @@ export default function App() {
           }
         />
         <Route path="tickets/:ref" element={<TicketDetail />} />
+        <Route
+          path="batch"
+          element={
+            <RequireAuth roles={['support_agent', 'admin']}>
+              <Batch />
+            </RequireAuth>
+          }
+        />
         <Route
           path="approvals"
           element={

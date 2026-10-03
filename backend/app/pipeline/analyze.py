@@ -22,6 +22,7 @@ from app.logging_setup import request_id_var
 from app.models import Analysis, Category, Ticket, User
 from app.pipeline.classify import classify
 from app.pipeline.draft import draft_resolution
+from app.pipeline.outage import detect_outage
 from app.pipeline.pii import redact
 from app.pipeline.retrieve import hybrid_search, reviewer_guidance
 from app.pipeline.rules import apply_rules
@@ -176,7 +177,17 @@ def run_analysis(db: Session, ticket: Ticket, user: User | None) -> Analysis:
     ticket.language = labels["language"]
     if ticket.status != "resolved":
         ticket.status = "pending_review" if review_status == "pending_review" else "open"
+    #keep the complaint vector for the outage detector and the category relabel suggestions
+    #(it is not searchable until an admin promotes the ticket)
+    if not ticket.is_searchable:
+        ticket.embedding = qvec
+        ticket.embedding_model = settings.embedding_model
     db.flush()
+
+    outage_refs = detect_outage(db, ticket, qvec)
+    if outage_refs:
+        labels["outage_refs"] = outage_refs
+        analysis.parsed = dict(labels)
 
     metrics.ANALYSES.labels(severity, review_status).inc()
     log.info(

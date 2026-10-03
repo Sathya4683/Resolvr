@@ -73,6 +73,14 @@ services:
       #first boot downloads the embedding models, give it time
       start_period: 600s
 
+  worker:
+    <<: *backend
+    #restarts itself when python files change, like uvicorn --reload does for the api
+    command: watchfiles --filter python "python -m app.worker" app
+    depends_on:
+      api:
+        condition: service_healthy
+
   frontend:
     build:
       context: .

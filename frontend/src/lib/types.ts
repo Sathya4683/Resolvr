@@ -162,3 +162,32 @@ export interface ApprovalItem {
   decided_at: string | null
   comment: string | null
 }
+
+export interface BatchResult {
+  row: number
+  ticket_ref?: string
+  category?: string | null
+  product?: string | null
+  severity?: Severity | null
+  sentiment?: string | null
+  review_status?: ReviewStatus
+  outcome?: string
+  top_source?: string | null
+  steps?: string[]
+  error?: string
+}
+
+export interface BatchJob {
+  id: number
+  kind: string
+  status: 'queued' | 'running' | 'done' | 'failed'
+  filename: string | null
+  total: number
+  processed: number
+  failed: number
+  results: BatchResult[]
+  error: string | null
+  created_at: string
+  started_at: string | null
+  finished_at: string | null
+}

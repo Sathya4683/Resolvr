@@ -121,7 +121,16 @@ def after_analysis(db: Session, ticket: Ticket, analysis: Analysis) -> list[Aler
                 email_to=settings.admin_email_list,
             )
         )
-    elif labels.get("sentiment") == "angry" and ticket.severity == "high":
+    if labels.get("outage_refs"):
+        refs = labels["outage_refs"]
+        title = f"Possible outage: {len(refs)} similar complaints in the last hour"
+        body = f"Latest: {snippet}\nTickets: {', '.join(refs[:8])}"
+        notify_users(db, users_with_role(db, "admin"), "outage", title, body, f"/tickets/{ticket.ref}")
+        for topic in (settings.ntfy_admin_topic, settings.ntfy_agent_topic):
+            alerts.append(Alert(title=title, message=body, topic=topic, priority="high", tags=["satellite"],
+                                link=f"/tickets/{ticket.ref}"))
+
+    if analysis.review_status != "pending_review" and labels.get("sentiment") == "angry" and ticket.severity == "high":
         alerts.append(
             Alert(
                 title=f"Angry customer, high severity: {ticket.ref}",

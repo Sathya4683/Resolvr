@@ -322,3 +322,20 @@ class ClientLogIn(BaseModel):
     path: str | None = Field(default=None, max_length=200)
     source: str | None = Field(default=None, max_length=300)
     line: int | None = None
+
+
+#---------------- batch jobs ----------------
+
+class BatchJobOut(ORM):
+    id: int
+    kind: str
+    status: str
+    filename: str | None
+    total: int
+    processed: int
+    failed: int
+    results: list
+    error: str | None
+    created_at: datetime
+    started_at: datetime | None
+    finished_at: datetime | None
