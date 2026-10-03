@@ -12,6 +12,7 @@ from app.db import SessionLocal, get_db
 from app.deps import agent_or_admin
 from app.llm import LLMError, get_llm, record_usage
 from app.models import ChatMessage, ChatSession, Ticket, User
+from app.ratelimit import rate_limit
 from app.schemas import ChatMessageIn, ChatMessageOut, ChatSessionIn, ChatSessionOut
 from app.services import chat as chat_service
 from app.services.tickets import get_by_ref
@@ -76,7 +77,7 @@ def delete_session(session_id: int, db: Session = Depends(get_db), user: User = 
     db.commit()
 
 
-@router.post("/sessions/{session_id}/messages")
+@router.post("/sessions/{session_id}/messages", dependencies=[Depends(rate_limit("chat"))])
 def send_message(
     session_id: int, body: ChatMessageIn, db: Session = Depends(get_db), user: User = Depends(agent_or_admin)
 ):

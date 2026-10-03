@@ -12,6 +12,9 @@ os.environ["NTFY_ADMIN_TOPIC"] = ""
 os.environ["NTFY_AGENT_TOPIC"] = ""
 os.environ["RERANKER_ENABLED"] = "false"
 os.environ["ENVIRONMENT"] = "test"
+#nothing listens here, the rate limiter fails open straight away (test_hardening fakes redis)
+os.environ.setdefault("REDIS_URL", "redis://localhost:6390/0")
+os.environ["WEBHOOK_SECRET"] = "test-webhook-secret"
 
 import pytest  # noqa: E402
 from alembic.config import Config  # noqa: E402

@@ -15,6 +15,7 @@ from app.config import settings
 from app.db import get_db
 from app.deps import agent_or_admin
 from app.models import BatchJob, User
+from app.ratelimit import rate_limit
 from app.schemas import BatchJobOut
 from app.services import audit
 from app.services.files import read_csv
@@ -34,7 +35,7 @@ def load_job(db: Session, job_id: int, user: User) -> BatchJob:
     return job
 
 
-@router.post("", response_model=BatchJobOut, status_code=202)
+@router.post("", response_model=BatchJobOut, status_code=202, dependencies=[Depends(rate_limit("batch"))])
 def upload(file: UploadFile = File(...), db: Session = Depends(get_db), user: User = Depends(agent_or_admin)):
     rows = read_csv(file, {"complaint"}, settings.max_csv_rows)
     clean = []

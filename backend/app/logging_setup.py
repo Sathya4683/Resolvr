@@ -52,5 +52,8 @@ def setup_logging(service: str, level: str = "INFO") -> None:
     #we log requests ourselves in the middleware (with request id + duration)
     logging.getLogger("uvicorn.access").disabled = True
 
-    for noisy in ("httpx", "httpcore", "urllib3", "sentence_transformers", "apscheduler", "google_genai", "huggingface_hub"):
-        logging.getLogger(noisy).setLevel(logging.WARNING)
+    noisy = ("httpx", "httpcore", "urllib3", "sentence_transformers", "apscheduler", "google_genai")
+    for name in noisy:
+        logging.getLogger(name).setLevel(logging.WARNING)
+    #warns about missing HF_TOKEN on every model load, not useful for us
+    logging.getLogger("huggingface_hub").setLevel(logging.ERROR)

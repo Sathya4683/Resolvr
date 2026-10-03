@@ -12,6 +12,7 @@ import logging
 import time
 from contextlib import contextmanager
 
+from langsmith import traceable
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
@@ -49,6 +50,8 @@ def needs_admin_review(severity: str) -> bool:
     return severity in settings.approval_severity_list
 
 
+#shows up as one trace per complaint in langsmith (no-op unless LANGSMITH_TRACING=true)
+@traceable(run_type="chain", name="analyze_complaint", process_inputs=lambda i: {"ticket": i["ticket"].ref})
 def run_analysis(db: Session, ticket: Ticket, user: User | None) -> Analysis:
     started = time.perf_counter()
     timings: dict[str, int] = {}

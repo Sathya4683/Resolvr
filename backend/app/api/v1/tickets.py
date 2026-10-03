@@ -10,6 +10,7 @@ from app.db import get_db
 from app.deps import agent_or_admin, any_user
 from app.models import Analysis, Feedback, Ticket, User
 from app.pipeline.analyze import run_analysis
+from app.ratelimit import rate_limit
 from app.schemas import FeedbackIn, ResolveIn, TicketCreate, TicketDetail, TicketListItem
 from app.services import audit, notify
 from app.services import tickets as ticket_service
@@ -24,7 +25,7 @@ def load_ticket(db: Session, ref: str) -> Ticket:
     return ticket
 
 
-@router.post("/tickets", response_model=TicketDetail, status_code=201)
+@router.post("/tickets", response_model=TicketDetail, status_code=201, dependencies=[Depends(rate_limit("analyze"))])
 def create_ticket(
     body: TicketCreate,
     background: BackgroundTasks,
@@ -100,7 +101,7 @@ def get_ticket(ref: str, db: Session = Depends(get_db), user: User = Depends(any
     return ticket_service.ticket_detail(db, load_ticket(db, ref), user)
 
 
-@router.post("/tickets/{ref}/reanalyze", response_model=TicketDetail)
+@router.post("/tickets/{ref}/reanalyze", response_model=TicketDetail, dependencies=[Depends(rate_limit("analyze"))])
 def reanalyze(
     ref: str, background: BackgroundTasks, db: Session = Depends(get_db), user: User = Depends(agent_or_admin)
 ):

@@ -6,6 +6,8 @@ below record latency / tokens / cost metrics for every call in one place.
 import logging
 from functools import lru_cache
 
+from langsmith import traceable
+
 from app import metrics
 from app.config import settings
 from app.llm.base import LLMError, LLMProvider, LLMResult, StreamChunk
@@ -42,6 +44,7 @@ def record_usage(purpose: str, result: LLMResult) -> None:
     metrics.LLM_COST.labels(purpose).inc(estimate_cost(result.prompt_tokens, result.completion_tokens))
 
 
+@traceable(run_type="llm", name="llm_call", process_inputs=lambda i: {"purpose": i["purpose"], "prompt": i["prompt"]})
 def call_json(purpose: str, system: str, prompt: str, schema: dict, fast: bool = False) -> LLMResult:
     """structured call with metrics, raises LLMError so callers can fall back"""
     llm = get_llm()
