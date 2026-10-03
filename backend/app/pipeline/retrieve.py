@@ -270,8 +270,11 @@ def pick_mix(ranked: list[Source], top_k: int, kb_slots: int = 2) -> list[Source
     return [s for s in ranked if id(s) in chosen]
 
 
-def reviewer_guidance(db: Session, qvec: list[float], limit: int = 3, min_similarity: float = 0.75) -> list[str]:
-    """notes analysts left on similar past cases, fed back into the prompts as guidance"""
+def reviewer_guidance(db: Session, qvec: list[float], limit: int = 3, min_similarity: float = 0.72) -> list[str]:
+    """
+    notes analysts left on similar past complaints, fed back into the prompts as guidance.
+    the review embedding is the reviewed complaint, so this is complaint-to-complaint similarity
+    """
     distance = AnalystReview.embedding.cosine_distance(qvec)
     #sql: SELECT guidance_text, embedding <=> :qvec AS distance FROM analyst_reviews
     #     WHERE guidance_text IS NOT NULL ORDER BY distance LIMIT :limit

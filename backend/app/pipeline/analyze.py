@@ -111,14 +111,14 @@ def run_analysis(db: Session, ticket: Ticket, user: User | None) -> Analysis:
     else:
         try:
             with timed("draft"):
-                draft, result = draft_resolution(text, labels, sources)
+                draft, result = draft_resolution(text, labels, sources, guidance=guidance)
                 usage.add(result)
                 problems = citation_problems(draft, allowed)
                 citation_check = {"valid": not problems, "retried": False, "stripped": False, "problems": problems}
                 if problems and not draft["abstain"]:
                     #one retry with a stricter prompt, then strip whatever is still wrong
                     metrics.CITATION_FAILURES.labels("retried").inc()
-                    draft, result = draft_resolution(text, labels, sources, problems=problems)
+                    draft, result = draft_resolution(text, labels, sources, problems=problems, guidance=guidance)
                     usage.add(result)
                     citation_check["retried"] = True
                     problems = citation_problems(draft, allowed)

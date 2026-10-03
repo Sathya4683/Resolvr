@@ -366,3 +366,57 @@ class ChatMessageOut(ORM):
 
 class ChatMessageIn(BaseModel):
     content: str = Field(min_length=1, max_length=2000)
+
+
+#---------------- analyst reviews ----------------
+
+class Rubric(BaseModel):
+    correct: bool
+    safe: bool
+    actionable: bool
+    complete: bool
+
+
+class LabelCorrections(BaseModel):
+    category: str | None = None
+    product: Product | None = None
+    severity: Literal["low", "medium", "high", "critical"] | None = None
+    sentiment: Literal["angry", "frustrated", "neutral", "positive"] | None = None
+
+
+class AnalystReviewIn(BaseModel):
+    verdict: Literal["correct", "partially_correct", "incorrect"]
+    citations_ok: bool
+    rubric: Rubric
+    corrections: LabelCorrections = Field(default_factory=LabelCorrections)
+    notes: str | None = Field(default=None, max_length=1500)
+
+
+class QueueItem(BaseModel):
+    analysis_id: int
+    ticket_ref: str
+    subject: str | None
+    snippet: str
+    severity: str | None
+    category: str | None
+    outcome: str
+    review_status: str
+    reasons: list[str]
+    confidence: float | None
+    created_at: datetime
+    claimed_by: str | None
+    locked: bool
+
+
+class AnalystReviewOut(BaseModel):
+    id: int
+    analysis_id: int
+    ticket_ref: str
+    analyst: str
+    verdict: str
+    citations_ok: bool
+    rubric: dict
+    original_labels: dict
+    corrected_labels: dict
+    notes: str | None
+    created_at: datetime

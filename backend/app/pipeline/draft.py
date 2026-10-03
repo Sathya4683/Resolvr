@@ -32,7 +32,11 @@ def format_sources(sources: list[Source]) -> str:
 
 
 def draft_resolution(
-    complaint: str, labels: dict, sources: list[Source], problems: list[str] | None = None
+    complaint: str,
+    labels: dict,
+    sources: list[Source],
+    problems: list[str] | None = None,
+    guidance: list[str] | None = None,
 ) -> tuple[dict, LLMResult]:
     allowed = [s.ref for s in sources]
     prompt = prompts.DRAFT_TEMPLATE.format(
@@ -42,6 +46,8 @@ def draft_resolution(
         sources=format_sources(sources),
         complaint=complaint,
     )
+    if guidance:
+        prompt += "\n\nNotes from quality reviewers on similar past cases:\n" + "\n".join(f"- {g}" for g in guidance)
     if problems:
         prompt += prompts.DRAFT_RETRY_NOTE.format(problems="; ".join(problems), allowed=", ".join(allowed))
     result = call_json("draft", prompts.DRAFT_SYSTEM, prompt, draft_schema(allowed))
