@@ -1,9 +1,9 @@
 import clsx from 'clsx'
-import { ArrowRight, BarChart3, ChevronDown, Headset, Lock, ShieldCheck, User as UserIcon } from 'lucide-react'
+import { ArrowRight, BarChart3, Headset, Lock, ShieldCheck, User as UserIcon } from 'lucide-react'
 import { useState, type FormEvent } from 'react'
 import { Navigate, useNavigate } from 'react-router'
 import { LogoMark } from '../components/Logo'
-import { Button } from '../components/ui'
+import { Accordion, Button } from '../components/ui'
 import { homePath, useAuth } from '../lib/auth'
 import type { Role } from '../lib/types'
 
@@ -44,7 +44,6 @@ export default function Login() {
   const [password, setPassword] = useState('')
   const [error, setError] = useState<string | null>(null)
   const [loading, setLoading] = useState(false)
-  const [openFaq, setOpenFaq] = useState<number | null>(0)
 
   if (user) return <Navigate to={homePath(user.role)} replace />
 
@@ -63,62 +62,40 @@ export default function Login() {
   }
 
   return (
-    <div className="grid min-h-full lg:grid-cols-2">
-      {/* left: what resolvr is */}
-      <section className="relative hidden overflow-hidden border-r border-line bg-panel lg:flex lg:flex-col">
-        <div className="pointer-events-none absolute -top-40 -left-40 size-[520px] rounded-full bg-accent-strong/20 blur-3xl" />
-        <div className="pointer-events-none absolute -right-32 bottom-0 size-[420px] rounded-full bg-info/10 blur-3xl" />
-        <div
-          className="pointer-events-none absolute inset-0 opacity-[0.04]"
-          style={{
-            backgroundImage: 'linear-gradient(#fff 1px, transparent 1px), linear-gradient(90deg, #fff 1px, transparent 1px)',
-            backgroundSize: '44px 44px',
-          }}
-        />
-        <div className="relative flex flex-1 flex-col justify-between p-12 xl:p-16">
-          <div className="flex items-center gap-3">
-            <LogoMark className="size-10" />
-            <span className="text-2xl font-semibold tracking-tight">Resolvr</span>
-          </div>
-
-          <div className="max-w-lg">
-            <p className="mb-4 inline-flex items-center gap-2 rounded-full border border-line bg-card/60 px-3 py-1 text-xs text-ink-2">
-              <span className="size-1.5 rounded-full bg-ok" />
-              Telecom support desk assistant
-            </p>
-            <h1 className="text-4xl leading-tight font-semibold tracking-tight xl:text-[2.75rem]">
-              Every complaint, matched to the fix that{' '}
-              <span className="bg-gradient-to-r from-accent to-info bg-clip-text text-transparent">already worked</span>.
-            </h1>
-            <p className="mt-4 text-base leading-relaxed text-ink-2">
-              Semantic search over past tickets and the knowledge base, grounded AI drafts with citations, and a human in the
-              loop for anything sensitive.
-            </p>
-
-            <div className="mt-10 space-y-2">
-              {FAQS.map((f, i) => (
-                <div key={f.q} className="rounded-xl border border-line bg-card/50 backdrop-blur">
-                  <button
-                    onClick={() => setOpenFaq(openFaq === i ? null : i)}
-                    className="flex w-full items-center justify-between gap-4 px-4 py-3 text-left text-sm font-medium"
-                  >
-                    {f.q}
-                    <ChevronDown
-                      className={clsx('size-4 shrink-0 text-ink-3 transition-transform', openFaq === i && 'rotate-180')}
-                    />
-                  </button>
-                  {openFaq === i && <p className="px-4 pb-4 text-sm leading-relaxed text-ink-2">{f.a}</p>}
-                </div>
-              ))}
+    <div className="grid min-h-full lg:h-screen lg:grid-cols-2 lg:overflow-hidden">
+      {/* left: what resolvr is, fixed to the viewport height and scrolls on its own */}
+      <section className="relative hidden border-r border-line bg-panel lg:block lg:h-screen lg:overflow-hidden">
+        <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_at_top_left,rgba(99,102,241,0.14),transparent_55%)]" />
+        <div className="relative h-full overflow-y-auto [scrollbar-gutter:stable]">
+          <div className="flex min-h-full flex-col px-12 py-12 xl:px-16">
+            <div className="flex items-center gap-3">
+              <LogoMark className="size-9" />
+              <span className="text-xl font-semibold tracking-tight">Resolvr</span>
             </div>
-          </div>
 
-          <p className="text-xs text-ink-3">Broadband · Mobile · DTH · Billing</p>
+            <div className="mt-20 max-w-lg">
+              <p className="text-xs font-semibold tracking-[0.14em] text-ink-3 uppercase">Telecom support desk</p>
+              <h1 className="mt-4 text-4xl leading-[1.15] font-semibold tracking-tight">
+                Every complaint, matched to the fix that already worked.
+              </h1>
+              <p className="mt-4 text-base leading-relaxed text-ink-2">
+                Semantic search over past tickets and the knowledge base, AI drafts that cite their sources, and an admin in
+                the loop for anything sensitive.
+              </p>
+
+              <div className="mt-14">
+                <h2 className="mb-2 text-sm font-semibold text-ink">Frequently asked questions</h2>
+                <Accordion items={FAQS.map((f) => ({ title: f.q, body: f.a }))} />
+              </div>
+            </div>
+
+            <p className="mt-auto pt-12 text-xs text-ink-3">Broadband · Mobile · DTH · Billing</p>
+          </div>
         </div>
       </section>
 
       {/* right: sign in */}
-      <section className="flex items-center justify-center p-6 sm:p-12">
+      <section className="flex items-center justify-center p-6 sm:p-12 lg:h-screen lg:overflow-y-auto">
         <div className="w-full max-w-md">
           <div className="mb-8 flex items-center gap-3 lg:hidden">
             <LogoMark className="size-9" />

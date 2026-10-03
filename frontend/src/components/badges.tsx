@@ -1,3 +1,4 @@
+import clsx from 'clsx'
 import { AlertOctagon, AlertTriangle, CheckCircle2, Circle, Clock, Frown, Meh, ShieldAlert, Smile, XCircle, Zap } from 'lucide-react'
 import { titleCase } from '../lib/format'
 import type { ReviewStatus, Severity } from '../lib/types'
@@ -10,11 +11,30 @@ const SEVERITY: Record<Severity, { tone: Tone; label: string }> = {
   critical: { tone: 'danger', label: 'Critical' },
 }
 
-export const SEVERITY_DOT: Record<string, string> = {
-  low: 'bg-ink-3',
-  medium: 'bg-warn',
-  high: 'bg-high',
-  critical: 'bg-danger',
+//priority bars like linear / jira: one, two or three bars, and a red "!" tile for critical
+export function SeverityIcon({ severity }: { severity: Severity | null }) {
+  if (severity === 'critical')
+    return (
+      <span
+        title="Critical"
+        className="grid size-3.5 shrink-0 place-items-center rounded-[3px] bg-danger text-[10px] leading-none font-bold text-bg"
+      >
+        !
+      </span>
+    )
+  const level = severity ? { low: 1, medium: 2, high: 3 }[severity] : 0
+  const color = { 1: 'bg-ink-2', 2: 'bg-warn', 3: 'bg-high' }[level] ?? 'bg-ink-3'
+  return (
+    <span title={severity ? `${severity} severity` : 'Not rated'} className="flex h-3.5 w-3.5 shrink-0 items-end gap-[2px]">
+      {[0, 1, 2].map((i) => (
+        <span
+          key={i}
+          className={clsx('w-[3px] rounded-[1px]', i < level ? color : 'bg-line-strong')}
+          style={{ height: `${5 + i * 3.5}px` }}
+        />
+      ))}
+    </span>
+  )
 }
 
 export function SeverityBadge({ severity, reason }: { severity: Severity | null; reason?: string | null }) {

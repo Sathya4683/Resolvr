@@ -1,6 +1,6 @@
 import clsx from 'clsx'
 import { Loader2, X } from 'lucide-react'
-import { useEffect, type ButtonHTMLAttributes, type ReactNode } from 'react'
+import { useEffect, useId, useState, type ButtonHTMLAttributes, type ReactNode } from 'react'
 
 type ButtonVariant = 'primary' | 'secondary' | 'ghost' | 'danger' | 'success'
 
@@ -305,6 +305,59 @@ export function Tabs<T extends string>({
           {item.label}
         </button>
       ))}
+    </div>
+  )
+}
+
+/**
+ * accordion that animates its height with the grid-rows trick (0fr -> 1fr), so opening an item
+ * only pushes the content below it and nothing jumps
+ */
+export function Accordion({ items }: { items: { title: string; body: ReactNode }[] }) {
+  const [open, setOpen] = useState<number | null>(null)
+  const id = useId()
+  return (
+    <div className="divide-y divide-line border-y border-line">
+      {items.map((item, i) => {
+        const isOpen = open === i
+        return (
+          <div key={item.title}>
+            <h3>
+              <button
+                id={`${id}-q${i}`}
+                aria-expanded={isOpen}
+                aria-controls={`${id}-a${i}`}
+                onClick={() => setOpen(isOpen ? null : i)}
+                className="group flex w-full items-center justify-between gap-6 py-4 text-left text-sm font-medium text-ink-2 transition-colors hover:text-ink focus-visible:text-ink focus-visible:outline-none"
+              >
+                {item.title}
+                <span className="relative grid size-5 shrink-0 place-items-center rounded-md text-ink-3 transition-colors group-hover:text-ink-2">
+                  <span className="absolute h-px w-3 bg-current" />
+                  <span
+                    className={clsx(
+                      'absolute h-3 w-px bg-current transition-transform duration-300 ease-out',
+                      isOpen && 'rotate-90',
+                    )}
+                  />
+                </span>
+              </button>
+            </h3>
+            <div
+              id={`${id}-a${i}`}
+              role="region"
+              aria-labelledby={`${id}-q${i}`}
+              className={clsx(
+                'grid transition-[grid-template-rows,opacity] duration-300 ease-out',
+                isOpen ? 'grid-rows-[1fr] opacity-100' : 'grid-rows-[0fr] opacity-0',
+              )}
+            >
+              <div className="overflow-hidden">
+                <div className="pr-10 pb-4 text-sm leading-relaxed text-ink-3">{item.body}</div>
+              </div>
+            </div>
+          </div>
+        )
+      })}
     </div>
   )
 }

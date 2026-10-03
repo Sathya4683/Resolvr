@@ -25,7 +25,7 @@ import { api } from '../lib/api'
 import { ROLE_LABEL, useAuth } from '../lib/auth'
 import { dayKey, dayLabel, timeOf } from '../lib/format'
 import type { Role, TicketListItem } from '../lib/types'
-import { SEVERITY_DOT } from './badges'
+import { SeverityIcon } from './badges'
 import { Logo } from './Logo'
 
 interface NavItem {
@@ -209,13 +209,9 @@ function TicketLink({ ticket }: { ticket: TicketListItem }) {
         active ? 'bg-raised' : 'hover:bg-raised/60',
       )}
     >
-      <span
-        className={clsx(
-          'mt-1.5 size-1.5 shrink-0 rounded-full',
-          SEVERITY_DOT[ticket.severity ?? ''] ?? 'bg-line-strong',
-          pending && 'ring-2 ring-warn/30',
-        )}
-      />
+      <span className="mt-[3px]">
+        <SeverityIcon severity={ticket.severity} />
+      </span>
       <div className="min-w-0 flex-1">
         <div className={clsx('truncate text-[13px]', active ? 'text-ink' : 'text-ink-2 group-hover:text-ink')}>
           {ticket.subject || ticket.snippet}

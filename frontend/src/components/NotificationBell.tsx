@@ -90,11 +90,13 @@ export function NotificationBell() {
                     qc.invalidateQueries({ queryKey: ['notifications'] })
                     if (n.link) navigate(n.link)
                   }}
-                  className="flex w-full gap-3 border-b border-line/60 px-4 py-3 text-left transition hover:bg-raised"
+                  className={clsx(
+                    'flex w-full gap-3 border-b border-line/60 px-4 py-3 text-left transition hover:bg-raised',
+                    !n.is_read && 'bg-accent/[0.06]',
+                  )}
                 >
-                  <span className={clsx('mt-1.5 size-2 shrink-0 rounded-full', n.is_read ? 'bg-transparent' : 'bg-accent')} />
                   <div className="min-w-0">
-                    <div className="text-sm font-medium">{n.title}</div>
+                    <div className={clsx('text-sm', n.is_read ? 'text-ink-2' : 'font-medium text-ink')}>{n.title}</div>
                     {n.body && <div className="mt-0.5 line-clamp-2 text-xs text-ink-3">{n.body}</div>}
                     <div className="mt-1 text-[11px] text-ink-3">{timeAgo(n.created_at)}</div>
                   </div>
