@@ -124,7 +124,7 @@ export default function TicketDetail() {
 
         {/* right column */}
         <div className="space-y-5">
-          {a && <LabelsCard ticket={ticket} analysis={a} />}
+          {a ? <LabelsCard ticket={ticket} analysis={a} /> : <RecordedLabels ticket={ticket} />}
 
           {ticket.can_edit && ticket.status !== 'resolved' && (
             <Card className="p-4">
@@ -335,7 +335,7 @@ function FeedbackBar({ analysis, ticketRef }: { analysis: Analysis; ticketRef: s
   )
 }
 
-function LabelsCard({ ticket, analysis: a }: { ticket: Ticket; analysis: Analysis }) {
+export function LabelsCard({ ticket, analysis: a }: { ticket: Ticket; analysis: Analysis }) {
   const p = a.parsed
   const rows: [string, React.ReactNode][] = [
     ['Category', ticket.category?.name ?? <span className="text-ink-3">Unclear</span>],
@@ -378,6 +378,36 @@ function LabelsCard({ ticket, analysis: a }: { ticket: Ticket; analysis: Analysi
               {p.guidance_used!.length} analyst note{p.guidance_used!.length > 1 ? 's' : ''} used
             </Badge>
           )}
+        </div>
+      )}
+    </Card>
+  )
+}
+
+function RecordedLabels({ ticket }: { ticket: Ticket }) {
+  const rows: [string, React.ReactNode][] = [
+    ['Category', ticket.category?.name ?? '-'],
+    ['Product', titleCase(ticket.product) || '-'],
+    ['Severity', <SeverityBadge key="s" severity={ticket.severity} reason={ticket.critical_reason} />],
+    ['Sentiment', <SentimentBadge key="t" sentiment={ticket.sentiment} />],
+    ['Source', titleCase(ticket.source)],
+  ]
+  return (
+    <Card>
+      <CardHeader title="Ticket details" icon={<Cpu className="size-4" />} />
+      <dl className="divide-y divide-line">
+        {rows.map(([k, v]) => (
+          <div key={k} className="flex items-center justify-between gap-3 px-5 py-2.5 text-sm">
+            <dt className="text-ink-3">{k}</dt>
+            <dd className="text-right text-ink">{v}</dd>
+          </div>
+        ))}
+      </dl>
+      {ticket.tags.length > 0 && (
+        <div className="flex flex-wrap gap-1.5 border-t border-line px-5 py-3">
+          {ticket.tags.map((t) => (
+            <Badge key={t}>{t}</Badge>
+          ))}
         </div>
       )}
     </Card>

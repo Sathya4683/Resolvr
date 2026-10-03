@@ -145,3 +145,20 @@ export interface KbArticle {
   content_md?: string
   chunks?: number
 }
+
+export interface ApprovalItem {
+  analysis_id: number
+  ticket_ref: string
+  subject: string | null
+  snippet: string
+  severity: Severity | null
+  critical_reason: string | null
+  category: string | null
+  raised_by: string | null
+  created_at: string
+  waiting_minutes: number
+  review_status: ReviewStatus
+  decided_by: string | null
+  decided_at: string | null
+  comment: string | null
+}

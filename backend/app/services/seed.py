@@ -4,6 +4,7 @@ import csv
 import json
 import logging
 import os
+from datetime import datetime, timezone
 from pathlib import Path
 
 from sqlalchemy import func, select, text
@@ -98,7 +99,13 @@ def seed_kb(db: Session) -> int:
 def seed_tickets(db: Session) -> dict:
     with (DATA_DIR / "tickets_resolved.csv").open(encoding="utf-8") as f:
         rows = list(csv.DictReader(f))
-    return import_resolved_tickets(db, rows, user=None, source="seed")
+    #the demo data covers 1-3 oct, if we seed in the middle of one of those days we don't want
+    #tickets "from the future" showing up in the sidebar or the daily report
+    now = datetime.now(timezone.utc)
+    current = [r for r in rows if datetime.fromisoformat(r["resolved_at"]) <= now]
+    if len(current) < len(rows):
+        log.info("skipping future dated demo tickets", extra={"skipped": len(rows) - len(current)})
+    return import_resolved_tickets(db, current, user=None, source="seed")
 
 
 def run_seed(db: Session, if_empty: bool = False) -> None:

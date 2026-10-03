@@ -5,6 +5,7 @@ import { AppShell } from './components/AppShell'
 import { EmptyState } from './components/ui'
 import { homePath, useAuth } from './lib/auth'
 import type { Role } from './lib/types'
+import Approvals from './pages/Approvals'
 import Login from './pages/Login'
 import NewTicket from './pages/NewTicket'
 import TicketDetail from './pages/TicketDetail'
@@ -48,6 +49,14 @@ export default function App() {
           }
         />
         <Route path="tickets/:ref" element={<TicketDetail />} />
+        <Route
+          path="approvals"
+          element={
+            <RequireAuth roles={['admin']}>
+              <Approvals />
+            </RequireAuth>
+          }
+        />
         <Route
           path="*"
           element={<EmptyState icon={<span>404</span>} title="Page not found" text="That page doesn't exist." />}
