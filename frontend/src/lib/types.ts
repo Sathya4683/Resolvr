@@ -191,3 +191,28 @@ export interface BatchJob {
   started_at: string | null
   finished_at: string | null
 }
+
+export interface ChatSession {
+  id: number
+  title: string
+  ticket_ref: string | null
+  created_at: string
+  updated_at: string
+}
+
+export interface ChatSourceSummary {
+  ref: string
+  kind: 'ticket' | 'kb'
+  title: string
+  similarity: number
+  snippet: string
+}
+
+export interface ChatMessage {
+  id: number
+  role: 'user' | 'assistant'
+  content: string
+  sources: ChatSourceSummary[]
+  created_at: string
+  streaming?: boolean
+}

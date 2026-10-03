@@ -44,6 +44,10 @@ class FakeProvider:
         return LLMResult(text=text, prompt_tokens=80, completion_tokens=20, model="fake")
 
     def stream_text(self, system: str, messages: list[dict]) -> Iterator[StreamChunk]:
+        queued = _queued["chat"][0] if _queued["chat"] else None
+        if isinstance(queued, Exception):
+            _queued["chat"].pop(0)
+            raise queued
         result = self.generate_text(system, messages)
         for word in result.text.split(" "):
             yield StreamChunk(text=word + " ")

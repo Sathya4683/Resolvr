@@ -339,3 +339,30 @@ class BatchJobOut(ORM):
     created_at: datetime
     started_at: datetime | None
     finished_at: datetime | None
+
+
+#---------------- assistant chat ----------------
+
+class ChatSessionIn(BaseModel):
+    title: str | None = Field(default=None, max_length=200)
+    ticket_ref: str | None = Field(default=None, max_length=20)
+
+
+class ChatSessionOut(BaseModel):
+    id: int
+    title: str
+    ticket_ref: str | None
+    created_at: datetime
+    updated_at: datetime
+
+
+class ChatMessageOut(ORM):
+    id: int
+    role: str
+    content: str
+    sources: list
+    created_at: datetime
+
+
+class ChatMessageIn(BaseModel):
+    content: str = Field(min_length=1, max_length=2000)
