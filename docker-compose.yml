@@ -11,6 +11,7 @@ x-backend: &backend
     DATABASE_URL: postgresql+psycopg2://${POSTGRES_USER:-resolvr}:${POSTGRES_PASSWORD:-resolvr}@db:5432/${POSTGRES_DB:-resolvr}
     TEST_DATABASE_URL: postgresql+psycopg2://${POSTGRES_USER:-resolvr}:${POSTGRES_PASSWORD:-resolvr}@db:5432/resolvr_test
     DATA_DIR: /data
+    HF_HUB_VERBOSITY: error
   volumes:
     - ./backend:/app
     - ./data:/data:ro
