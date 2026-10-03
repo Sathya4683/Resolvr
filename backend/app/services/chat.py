@@ -14,7 +14,8 @@ from app.pipeline import prompts
 from app.pipeline.pii import redact
 from app.pipeline.retrieve import Source, hybrid_search
 
-CITATION_RE = re.compile(r"\[((?:KB|TCK)-\d+)\]")
+#matches [KB-004] and also grouped ones like [KB-004, TCK-10023]
+CITATION_RE = re.compile(r"\[((?:KB|TCK)-\d+(?:\s*,\s*(?:KB|TCK)-\d+)*)\]")
 HISTORY_TURNS = 8
 
 
@@ -64,4 +65,5 @@ def source_summary(sources: list[Source]) -> list[dict]:
 
 def cited_refs(text: str, sources: list[dict]) -> list[str]:
     allowed = {s["ref"] for s in sources}
-    return [r for r in dict.fromkeys(CITATION_RE.findall(text)) if r in allowed]
+    found = [ref.strip() for group in CITATION_RE.findall(text) for ref in group.split(",")]
+    return [r for r in dict.fromkeys(found) if r in allowed]

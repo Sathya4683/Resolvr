@@ -20,9 +20,14 @@ const SUGGESTIONS = [
   'Channels are missing after a DTH recharge, how do I fix it?',
 ]
 
-//turn [KB-001] into a link we can render as a citation chip
+//turn [KB-001] (or a group like [KB-001, TCK-10023]) into links we can render as citation chips
 function withCitationLinks(text: string) {
-  return text.replace(/\[((?:KB|TCK)-\d+)\]/g, '[$1](#cite-$1)')
+  return text.replace(/\[((?:KB|TCK)-\d+(?:\s*,\s*(?:KB|TCK)-\d+)*)\]/g, (_, group: string) =>
+    group
+      .split(',')
+      .map((ref) => `[${ref.trim()}](#cite-${ref.trim()})`)
+      .join(' '),
+  )
 }
 
 export default function Assistant() {
