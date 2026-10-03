@@ -15,7 +15,7 @@ from sqlalchemy.orm import Session
 
 from app import metrics
 from app.config import settings
-from app.embeddings import embed_documents
+from app import embeddings
 from app.models import Category, KbArticle, KbChunk, Ticket, User
 from app.models.tickets import PRODUCTS, SENTIMENTS, SEVERITIES
 
@@ -102,7 +102,7 @@ def save_kb_article(
     db.flush()  #gets us the id (and the generated ref) before adding chunks
 
     sections = split_sections(article.title, article.content_md)
-    vectors = embed_documents([text for _, text in sections])
+    vectors = embeddings.embed_documents([text for _, text in sections])
     for i, ((heading, text), vector) in enumerate(zip(sections, vectors)):
         db.add(
             KbChunk(
@@ -237,7 +237,7 @@ def import_resolved_tickets(db: Session, rows: list[dict], user: User | None, so
         pending.append((ticket, text))
 
     if pending:
-        vectors = embed_documents([text for _, text in pending])
+        vectors = embeddings.embed_documents([text for _, text in pending])
         for (ticket, _), vector in zip(pending, vectors):
             ticket.embedding = vector
             ticket.embedding_model = settings.embedding_model
@@ -255,7 +255,7 @@ def promote_ticket(db: Session, ticket: Ticket) -> Ticket:
     """an admin approved an agent-resolved ticket, so it becomes part of the searchable history"""
     steps = ticket.resolution_steps or []
     ticket.content_hash = content_hash(ticket.complaint, steps)
-    ticket.embedding = embed_documents(
+    ticket.embedding = embeddings.embed_documents(
         [ticket_embedding_text(ticket.subject, ticket.complaint, ticket.resolution_summary)]
     )[0]
     ticket.embedding_model = settings.embedding_model

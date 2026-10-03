@@ -17,7 +17,7 @@ class Settings(BaseSettings):
     database_url: str = "postgresql+psycopg2://resolvr:resolvr@db:5432/resolvr"
     redis_url: str = "redis://redis:6379/0"
 
-    jwt_secret: str = "dev-only-secret"
+    jwt_secret: str = "dev-only-secret-please-override-in-env"
     jwt_expire_minutes: int = 600
 
     #llm
