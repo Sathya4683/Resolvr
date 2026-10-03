@@ -1,0 +1,91 @@
+@import "tailwindcss";
+@plugin "@tailwindcss/typography";
+@import "@fontsource-variable/inter";
+@import "@fontsource-variable/jetbrains-mono";
+
+@theme {
+  --font-sans: "Inter Variable", ui-sans-serif, system-ui, sans-serif;
+  --font-mono: "JetBrains Mono Variable", ui-monospace, monospace;
+
+  /* surfaces, darkest to lightest */
+  --color-bg: #0b0c0f;
+  --color-panel: #0f1115;
+  --color-card: #14171c;
+  --color-raised: #1a1e25;
+  --color-hover: #20252d;
+  --color-line: #232831;
+  --color-line-strong: #2f3541;
+
+  /* text */
+  --color-ink: #e8eaef;
+  --color-ink-2: #a9afba;
+  --color-ink-3: #6c7380;
+
+  /* brand + status */
+  --color-accent: #8083ff;
+  --color-accent-strong: #6366f1;
+  --color-ok: #34d399;
+  --color-warn: #fbbf24;
+  --color-high: #fb923c;
+  --color-danger: #f87171;
+  --color-info: #60a5fa;
+}
+
+@layer base {
+  html,
+  body,
+  #root {
+    height: 100%;
+  }
+  body {
+    @apply bg-bg text-ink font-sans antialiased;
+    font-feature-settings: "cv11", "ss01";
+  }
+  ::selection {
+    background: color-mix(in srgb, var(--color-accent) 35%, transparent);
+  }
+  * {
+    scrollbar-width: thin;
+    scrollbar-color: var(--color-line-strong) transparent;
+  }
+}
+
+@layer components {
+  .input {
+    @apply w-full rounded-lg border border-line bg-panel px-3 py-2 text-sm text-ink placeholder:text-ink-3
+      outline-none transition focus:border-accent/60 focus:ring-2 focus:ring-accent/20;
+  }
+  .label {
+    @apply mb-1.5 block text-xs font-medium text-ink-2;
+  }
+  .card {
+    @apply rounded-xl border border-line bg-card;
+  }
+}
+
+/* markdown editor follows our dark palette */
+.wmde-markdown-var,
+[data-color-mode="dark"] .w-md-editor {
+  --color-canvas-default: var(--color-panel);
+  --color-canvas-subtle: var(--color-card);
+  --color-border-default: var(--color-line);
+  --color-border-muted: var(--color-line);
+  --color-fg-default: var(--color-ink);
+}
+[data-color-mode="dark"] .w-md-editor {
+  background-color: var(--color-panel);
+  box-shadow: none;
+  border: 1px solid var(--color-line);
+  border-radius: 0.75rem;
+}
+[data-color-mode="dark"] .w-md-editor-toolbar {
+  background-color: var(--color-card);
+  border-bottom-color: var(--color-line);
+  border-radius: 0.75rem 0.75rem 0 0;
+}
+
+@keyframes shimmer {
+  100% {
+    transform: translateX(100%);
+  }
+}

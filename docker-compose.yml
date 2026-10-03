@@ -73,6 +73,24 @@ services:
       #first boot downloads the embedding models, give it time
       start_period: 600s
 
+  frontend:
+    build:
+      context: .
+      dockerfile: docker/frontend.Dockerfile
+      target: dev
+    image: resolvr-frontend:dev
+    environment:
+      VITE_API_URL: http://localhost:8001
+    volumes:
+      - ./frontend:/app
+      #keep the container's own node_modules instead of the host's
+      - /app/node_modules
+    ports:
+      - "5174:5173"
+    depends_on:
+      - api
+    restart: unless-stopped
+
   mailpit:
     image: axllent/mailpit:latest
     ports:
