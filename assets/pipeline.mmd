@@ -1,0 +1,12 @@
+flowchart LR
+    a["Complaint"] --> b["Mask PII"]
+    b --> c["Classify<br/>Gemini + escalation rules"]
+    c --> d["Hybrid search<br/>vectors + full text<br/>+ reranker"]
+    d --> e{"Enough<br/>evidence?"}
+    e -- no --> f["Abstain<br/>and escalate"]
+    e -- yes --> g["Draft steps<br/>with citations"]
+    g --> h["Check every<br/>citation"]
+    h --> i{"Critical?"}
+    i -- yes --> j["Admin approval"]
+    i -- no --> k["Agent"]
+    j --> k

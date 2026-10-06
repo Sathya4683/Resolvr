@@ -1,3 +1,5 @@
+import json
+
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
@@ -34,6 +36,15 @@ def classification_schema(category_slugs: list[str]) -> dict:
     }
 
 
+def examples_block(slugs: list[str]) -> str:
+    #skip an example if its category was switched off, the model must never see a label it can't use
+    shown = [e for e in prompts.CLASSIFY_EXAMPLES if e["labels"]["category"] in slugs]
+    if not shown:
+        return ""
+    parts = [f'Complaint: {e["complaint"]}\nLabels: {json.dumps(e["labels"])}' for e in shown]
+    return "\nExamples of how complaints are labelled:\n" + "\n\n".join(parts) + "\n"
+
+
 def build_prompt(complaint: str, categories: list[Category], guidance: list[str], product_hint: str | None) -> str:
     lines = []
     for c in categories:
@@ -47,6 +58,7 @@ def build_prompt(complaint: str, categories: list[Category], guidance: list[str]
     return prompts.CLASSIFY_TEMPLATE.format(
         categories="\n".join(lines),
         severity_guide=prompts.SEVERITY_GUIDE,
+        examples=examples_block([c.slug for c in categories]),
         guidance=guidance_block,
         hint=hint,
         complaint=complaint,

@@ -59,9 +59,11 @@ resource "aws_instance" "resolvr" {
     volume_type = "gp3"
   }
 
-  #first boot: install docker (the compose plugin comes with it)
+  #first boot: some swap for the image builds, then docker (the compose plugin comes with it)
   user_data = <<-EOF
     #!/bin/bash
+    fallocate -l 4G /swapfile && chmod 600 /swapfile && mkswap /swapfile && swapon /swapfile
+    echo '/swapfile none swap sw 0 0' >> /etc/fstab
     curl -fsSL https://get.docker.com | sh
     usermod -aG docker ubuntu
     systemctl enable --now docker

@@ -1,20 +1,83 @@
-#every push to main updates the demo server (pull + rebuild what changed)
+#tests on every push / pull request, and every push to main also updates the demo server
+#(only if the tests pass). "Run workflow" can deploy an older commit to roll back.
 name: deploy
 
 on:
   push:
     branches: [main]
+  pull_request:
   workflow_dispatch:
-
-#never run two deploys on the box at once
-concurrency:
-  group: deploy
-  cancel-in-progress: false
+    inputs:
+      ref:
+        description: "Commit sha, tag or branch to deploy (empty = latest main). Use an older sha to roll back."
+        required: false
+        default: ""
 
 jobs:
+  backend:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    services:
+      #same postgres + pgvector image as docker compose, the tests run against a real db
+      db:
+        image: pgvector/pgvector:pg16
+        env:
+          POSTGRES_USER: resolvr
+          POSTGRES_PASSWORD: resolvr
+          POSTGRES_DB: resolvr_test
+        ports:
+          - 5434:5432
+        options: >-
+          --health-cmd "pg_isready -U resolvr"
+          --health-interval 5s
+          --health-retries 20
+    defaults:
+      run:
+        working-directory: backend
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v6
+        with:
+          enable-cache: true
+          cache-dependency-glob: backend/uv.lock
+      - run: uv python install 3.12
+      - run: uv sync --frozen
+      - name: Lint
+        run: uv run ruff check app tests evals
+      #fake llm + fake embedder, so no api key or model download needed
+      - name: Tests
+        run: uv run pytest -q
+        env:
+          TEST_DATABASE_URL: postgresql+psycopg2://resolvr:resolvr@localhost:5434/resolvr_test
+
+  frontend:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    defaults:
+      run:
+        working-directory: frontend
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+      - run: npm ci
+      - run: npm run lint
+      #type check + production build
+      - run: npm run build
+
   deploy:
+    needs: [backend, frontend]
+    #pull requests only get tested
+    if: github.event_name != 'pull_request'
     runs-on: ubuntu-latest
     timeout-minutes: 30
+    #never run two deploys on the box at once
+    concurrency:
+      group: deploy-server
+      cancel-in-progress: false
     steps:
       #the server is stopped most of the time, skip instead of failing
       - name: Check the server is running
@@ -32,9 +95,12 @@ jobs:
       - name: Pull and restart on the server
         if: steps.server.outputs.up == 'true'
         uses: appleboy/ssh-action@v1
+        env:
+          DEPLOY_REF: ${{ inputs.ref || 'main' }}
         with:
           host: ${{ secrets.EC2_HOST }}
           username: ubuntu
           key: ${{ secrets.EC2_SSH_KEY }}
+          envs: DEPLOY_REF
           command_timeout: 25m
-          script: cd ~/resolvr && ./deploy/deploy.sh main
+          script: cd ~/resolvr && ./deploy/deploy.sh "$DEPLOY_REF"

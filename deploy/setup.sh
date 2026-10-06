@@ -53,9 +53,12 @@ GF_PASS="$(remote "grep -s '^GRAFANA_ADMIN_PASSWORD=' ~/resolvr/.env | cut -d= -
 #grafana is public on the server, never leave it on admin/admin
 if [ -z "$GF_PASS" ] || [ "$GF_PASS" = "admin" ]; then GF_PASS="$(openssl rand -hex 8)"; fi
 
+#torch threads = cores on the box (the laptop value would oversubscribe a small server)
+CPUS="$(remote nproc)"
+
 ENV_FILE="$(mktemp)"
 trap 'rm -f "$ENV_FILE"' EXIT
-grep -vE '^(ENVIRONMENT|APP_HOST|FRONTEND_URL|CORS_ORIGINS|JWT_SECRET|GRAFANA_ADMIN_PASSWORD)=' "$ROOT/.env" > "$ENV_FILE"
+grep -vE '^(ENVIRONMENT|APP_HOST|FRONTEND_URL|CORS_ORIGINS|JWT_SECRET|GRAFANA_ADMIN_PASSWORD|TORCH_THREADS)=' "$ROOT/.env" > "$ENV_FILE"
 cat >> "$ENV_FILE" <<EOF
 
 #set by deploy/setup.sh
@@ -65,6 +68,7 @@ FRONTEND_URL=https://$HOST
 CORS_ORIGINS=https://$HOST
 JWT_SECRET=$JWT
 GRAFANA_ADMIN_PASSWORD=$GF_PASS
+TORCH_THREADS=$CPUS
 EOF
 scp -q "${SSH_OPTS[@]}" "$ENV_FILE" "ubuntu@$IP:resolvr/.env"
 

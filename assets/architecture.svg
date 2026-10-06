@@ -1,0 +1,87 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1180" height="510" viewBox="0 0 1180 510" font-family="Inter, 'Segoe UI', Helvetica, Arial, sans-serif">
+  <defs>
+    <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M0 0 L10 5 L0 10 z" fill="#64748b"/>
+    </marker>
+    <style>
+      .box { fill: #f5f7ff; stroke: #6366f1; stroke-width: 1.5; }
+      .ext { fill: #fff7ed; stroke: #f59e0b; stroke-width: 1.5; }
+      .mon { fill: #f0fdf4; stroke: #22c55e; stroke-width: 1.5; }
+      .t { font-size: 15px; font-weight: 600; fill: #1e1b4b; text-anchor: middle; }
+      .s { font-size: 12.5px; fill: #475569; text-anchor: middle; }
+      .edge { stroke: #64748b; stroke-width: 1.6; fill: none; marker-end: url(#arrow); }
+      .dash { stroke-dasharray: 5 4; }
+      .lbl { font-size: 11.5px; fill: #64748b; }
+    </style>
+  </defs>
+  <rect width="1180" height="510" fill="#ffffff"/>
+
+  <!-- users + edge -->
+  <rect class="box" x="60" y="40" width="210" height="70" rx="10"/>
+  <text class="t" x="165" y="70">Browser</text>
+  <text class="s" x="165" y="92">React · agent, admin, analyst</text>
+
+  <rect class="box" x="320" y="40" width="240" height="70" rx="10"/>
+  <text class="t" x="440" y="70">Caddy</text>
+  <text class="s" x="440" y="92">HTTPS (Let's Encrypt) and routing</text>
+
+  <!-- compose host -->
+  <rect x="30" y="150" width="850" height="330" rx="14" fill="#f8fafc" stroke="#cbd5e1" stroke-width="1.5" stroke-dasharray="6 5"/>
+  <text x="50" y="176" font-size="13px" font-weight="600" fill="#334155">Docker Compose · one EC2 instance</text>
+
+  <rect class="mon" x="60" y="205" width="210" height="80" rx="10"/>
+  <text class="t" x="165" y="236">Monitoring</text>
+  <text class="s" x="165" y="258">Prometheus · Loki · Alloy</text>
+  <text class="s" x="165" y="275">Grafana dashboard</text>
+
+  <rect class="box" x="320" y="205" width="240" height="80" rx="10"/>
+  <text class="t" x="440" y="236">API · FastAPI</text>
+  <text class="s" x="440" y="258">auth and roles, RAG pipeline,</text>
+  <text class="s" x="440" y="275">chat (SSE), approvals, reports</text>
+
+  <rect class="box" x="610" y="205" width="240" height="80" rx="10"/>
+  <text class="t" x="730" y="236">Worker</text>
+  <text class="s" x="730" y="258">CSV batch jobs, daily digest,</text>
+  <text class="s" x="730" y="275">overdue approval alerts</text>
+
+  <!-- redis (cylinder) -->
+  <path class="box" d="M60 382 a105 12 0 0 1 210 0 v60 a105 12 0 0 1 -210 0 z"/>
+  <path d="M60 382 a105 12 0 0 0 210 0" fill="none" stroke="#6366f1" stroke-width="1.5"/>
+  <text class="t" x="165" y="420">Redis</text>
+  <text class="s" x="165" y="441">rate limits</text>
+
+  <rect class="box" x="320" y="370" width="240" height="85" rx="10"/>
+  <text class="t" x="440" y="402">Local models (CPU)</text>
+  <text class="s" x="440" y="424">bge-base embeddings</text>
+  <text class="s" x="440" y="441">bge cross-encoder reranker</text>
+
+  <!-- postgres (cylinder) -->
+  <path class="box" d="M610 382 a120 12 0 0 1 240 0 v60 a120 12 0 0 1 -240 0 z"/>
+  <path d="M610 382 a120 12 0 0 0 240 0" fill="none" stroke="#6366f1" stroke-width="1.5"/>
+  <text class="t" x="730" y="420">PostgreSQL + pgvector</text>
+  <text class="s" x="730" y="441">tickets, KB chunks, analyses, jobs</text>
+
+  <!-- external -->
+  <text x="930" y="30" font-size="13px" font-weight="600" fill="#334155">External services</text>
+  <rect class="ext" x="930" y="40" width="220" height="70" rx="10"/>
+  <text class="t" x="1040" y="70">Gemini API</text>
+  <text class="s" x="1040" y="92">classify, draft, chat</text>
+
+  <rect class="ext" x="930" y="205" width="220" height="80" rx="10"/>
+  <text class="t" x="1040" y="236">ntfy + SMTP</text>
+  <text class="s" x="1040" y="258">push alerts, emails,</text>
+  <text class="s" x="1040" y="275">PDF digest</text>
+
+  <!-- edges -->
+  <path class="edge" d="M270 75 H316"/>
+  <path class="edge" d="M440 110 V201"/>
+  <path class="edge dash" d="M270 245 H316"/>
+  <text class="lbl" x="276" y="237">scrape</text>
+  <path class="edge" d="M380 285 V330 H165 V366"/>
+  <path class="edge" d="M440 285 V366"/>
+  <path class="edge" d="M500 285 V330 H700 V366"/>
+  <path class="edge" d="M760 285 V366"/>
+  <path class="edge" d="M540 205 V130 H1040 V114"/>
+  <path d="M780 205 V130" stroke="#64748b" stroke-width="1.6" fill="none"/>
+  <path class="edge" d="M850 245 H926"/>
+</svg>

@@ -2,9 +2,10 @@ variable "region" {
   default = "ap-south-1"
 }
 
-#8 vcpu / 16gb, the embedding + reranker models run on cpu so cores matter
+#2 vcpu / 8gb, the biggest type the aws free plan (credits) allows
+#on a paid account c7i.2xlarge (8 vcpu) makes the models a lot snappier
 variable "instance_type" {
-  default = "c7i.2xlarge"
+  default = "m7i-flex.large"
 }
 
 variable "disk_gb" {

@@ -22,10 +22,31 @@ CLASSIFY_TEMPLATE = """Categories (answer with the slug):
 
 Sentiment of the customer: angry, frustrated, neutral or positive.
 Set in_scope to false only if the message is not about a telecom service at all (food delivery, banking, travel...).
-{guidance}{hint}
+{examples}{guidance}{hint}
 <complaint>
 {complaint}
 </complaint>"""
+
+#few-shot examples: a handful of labelled complaints so the model sees the style we want
+#(messy customer text in, calm labels out). written by hand, kept out of the eval set on purpose
+CLASSIFY_EXAMPLES = [
+    {
+        "complaint": "net keeps cutting every 10 15 mins since morning, router lights look fine. pls fix wfh tomorrow",
+        "labels": {"category": "broadband_disconnection", "product": "broadband", "severity": "medium",
+                   "critical_reason": "none", "sentiment": "frustrated"},
+    },
+    {
+        "complaint": "Hi, how do I change my wifi name and password? Thanks",
+        "labels": {"category": "router_wifi_setup", "product": "broadband", "severity": "low",
+                   "critical_reason": "none", "sentiment": "neutral"},
+    },
+    {
+        "complaint": "my sim stopped working last night and today 40k got debited from my bank via upi. "
+                     "i never asked for a new sim!!",
+        "labels": {"category": "fraud_account_security", "product": "mobile", "severity": "critical",
+                   "critical_reason": "fraud", "sentiment": "angry"},
+    },
+]
 
 DRAFT_SYSTEM = """You help a telecom support agent resolve a customer complaint.
 Write the resolution using ONLY the sources you are given. Official help articles come first: use them as the

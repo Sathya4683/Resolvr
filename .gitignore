@@ -36,3 +36,11 @@ deploy/.keys/
 .terraform/
 *.tfstate
 *.tfstate.*
+AI_Developer_JD.docx
+
+# mlflow eval runs (local)
+backend/evals/mlflow.db
+backend/evals/mlartifacts/
+Evaluation.docx
+Use Case for SSN (4).docx
+output.md

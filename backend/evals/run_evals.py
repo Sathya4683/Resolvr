@@ -5,7 +5,8 @@ loaded into the database, so retrieval can't cheat by finding the exact text.
     docker compose exec api python -m evals.run_evals                  # everything
     docker compose exec api python -m evals.run_evals --retrieval-only # no llm calls needed
 
-Writes evals/results/report.md, metrics.json and confusion matrix images.
+Writes evals/results/report.md, metrics.json and confusion matrix images,
+and logs the run (settings + scores) to MLflow, see evals/tracking.py.
 
 A. retrieval    recall@k and MRR for keyword vs vector vs hybrid vs hybrid + reranker
 B. classify     confusion matrices + per class precision/recall/F1 for category, product,
@@ -36,6 +37,7 @@ from app.pipeline.pii import redact
 from app.pipeline.retrieve import hybrid_search
 from app.pipeline.rules import SEVERITY_ORDER, apply_rules
 from app.pipeline.validate import citation_problems
+from evals.tracking import log_run
 
 DATA = Path(os.getenv("DATA_DIR", "/data"))
 OUT = Path(__file__).parent / "results"
@@ -371,6 +373,7 @@ def main():
             results["drafting"] = eval_drafting(db, rows, preds, args.judge_limit)
     write_report(results)
     print(f"report written to {OUT / 'report.md'}")
+    log_run(results, args.retrieval_only)
 
 
 if __name__ == "__main__":

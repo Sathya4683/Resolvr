@@ -124,6 +124,19 @@ def test_inactive_category_is_not_offered(db, categories):
     assert "billing_dispute" not in prompt
 
 
+def test_few_shot_examples_follow_active_categories(db, categories):
+    prompt = build_prompt("wifi keeps dropping", active_categories(db), [], None)
+    assert "Examples of how complaints are labelled" in prompt
+    assert '"category": "broadband_disconnection"' in prompt
+    #the fixture has no wifi setup category, so that example is left out
+    assert "router_wifi_setup" not in prompt
+
+    categories["broadband_disconnection"].is_active = False
+    db.commit()
+    prompt = build_prompt("wifi keeps dropping", active_categories(db), [], None)
+    assert "broadband_disconnection" not in prompt
+
+
 def test_resolve_and_feedback(client, headers, knowledge):
     FakeProvider.queue("classify", classify_response())
     ticket = create(client, headers)
