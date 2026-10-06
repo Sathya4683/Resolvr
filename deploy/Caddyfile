@@ -1,0 +1,17 @@
+#caddy gets and renews the https cert on its own (lets encrypt)
+{$APP_HOST} {
+	encode gzip
+
+	#api + its swagger docs, everything else is the react app
+	@api path /v1/* /docs* /openapi.json
+	handle @api {
+		reverse_proxy api:8000
+	}
+	handle {
+		reverse_proxy frontend:80
+	}
+}
+
+grafana.{$APP_HOST} {
+	reverse_proxy grafana:3000
+}

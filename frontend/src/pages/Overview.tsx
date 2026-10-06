@@ -26,7 +26,7 @@ import {
 import type { NameType, ValueType } from 'recharts/types/component/DefaultTooltipContent'
 import { SeverityIcon } from '../components/badges'
 import { Card, CardHeader, Mono, PageHeader, Skeleton, Stat } from '../components/ui'
-import { api } from '../lib/api'
+import { api, API_URL } from '../lib/api'
 import { pct, titleCase } from '../lib/format'
 import type { ApprovalItem, Severity } from '../lib/types'
 
@@ -63,12 +63,18 @@ const SEVERITIES: Severity[] = ['low', 'medium', 'high', 'critical']
 const SURFACE = '#14171c'
 const AXIS = { fill: '#6c7380', fontSize: 12 }
 
-const MONITORING = [
-  { label: 'Grafana dashboards', url: 'http://localhost:3001' },
-  { label: 'Prometheus', url: 'http://localhost:9091' },
-  { label: 'Mailpit (dev inbox)', url: 'http://localhost:8026' },
-  { label: 'API docs', url: 'http://localhost:8001/docs' },
-]
+//on the server everything sits behind one domain (api on the same origin, grafana on a subdomain)
+const MONITORING = API_URL
+  ? [
+      { label: 'Grafana dashboards', url: 'http://localhost:3001' },
+      { label: 'Prometheus', url: 'http://localhost:9091' },
+      { label: 'Mailpit (dev inbox)', url: 'http://localhost:8026' },
+      { label: 'API docs', url: `${API_URL}/docs` },
+    ]
+  : [
+      { label: 'Grafana dashboards', url: `https://grafana.${window.location.host}` },
+      { label: 'API docs', url: '/docs' },
+    ]
 
 function dayName(iso: string) {
   return new Date(`${iso}T00:00:00`).toLocaleDateString('en-IN', { weekday: 'short', day: 'numeric', month: 'short' })

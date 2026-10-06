@@ -1,0 +1,62 @@
+#server overrides, used as:
+#docker compose -f docker-compose.yml -f docker-compose.prod.yml up -d --build
+#only caddy is published (80/443), everything else talks on the internal network
+
+services:
+  db:
+    ports: !reset []
+
+  api:
+    #same as dev, just without --reload
+    command: >
+      sh -c "alembic upgrade head &&
+             python -m app.cli seed --if-empty &&
+             uvicorn app.main:app --host 0.0.0.0 --port 8000 --no-access-log"
+    ports: !reset []
+
+  worker:
+    command: python -m app.worker
+
+  frontend:
+    build:
+      target: prod
+      args:
+        #empty = call the api on the same domain (/v1/...), caddy routes it
+        VITE_API_URL: ""
+    image: resolvr-frontend:prod
+    environment: !reset {}
+    volumes: !reset []
+    ports: !reset []
+
+  mailpit:
+    ports: !reset []
+
+  prometheus:
+    ports: !reset []
+
+  alloy:
+    ports: !reset []
+
+  grafana:
+    environment:
+      GF_SERVER_ROOT_URL: https://grafana.${APP_HOST}
+    ports: !reset []
+
+  caddy:
+    image: caddy:2-alpine
+    environment:
+      APP_HOST: ${APP_HOST}
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./deploy/Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy_data:/data
+    depends_on:
+      - api
+      - frontend
+      - grafana
+    restart: unless-stopped
+
+volumes:
+  caddy_data:
