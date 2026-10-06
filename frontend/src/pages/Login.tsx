@@ -16,7 +16,7 @@ const ROLES: { value: Role; label: string; icon: typeof Headset; blurb: string }
 const FAQS = [
   {
     q: 'What does Resolvr do?',
-    a: 'Paste a customer complaint and Resolvr labels it (category, product, severity, sentiment), finds the most similar past tickets and help articles, and drafts step-by-step fixes with citations.',
+    a: 'Paste a customer complaint and Resolvr labels it (category, product, severity, sentiment), finds the most similar past tickets and help articles, and drafts step-by-step fixes with citations!',
   },
   {
     q: 'Where do the answers come from?',
