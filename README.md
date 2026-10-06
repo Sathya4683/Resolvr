@@ -242,6 +242,35 @@ docker compose run --rm --no-deps -p 5001:5000 api \
     mlflow ui --host 0.0.0.0 --backend-store-uri sqlite:///evals/mlflow.db
 ```
 
+### Why the LLM part of the evals has no numbers yet
+
+**What it was meant to check.** The Gemini side gets the same treatment as retrieval:
+- **Classification:** are category, product, severity and sentiment right? Is a critical case (legal threat, fraud) ever
+  rated lower than it should be?
+- **Drafting:** are all citations real, does it abstain on non-telecom complaints, and is every step actually supported
+  by the source it cites? For the last one, a second model reads each step next to its source.
+
+**Why it couldn't run.**
+- **Cost of a full run.** One pass over the 48 held-out complaints needs about 135 Gemini requests: one classify and
+  one draft per complaint, plus checking each drafted step.
+- **Free-tier limits.** The free tier gives roughly 20 requests per day per model and about 5 per minute. A full run
+  would take about a week of daily quota, and that same quota is what the live demo runs on.
+- **A smaller run was tried too.** The plan was:
+  - one complaint per category (16) plus 2 out-of-scope ones
+  - every step of a draft checked in a single call
+  - about 50 requests, spread over three flash models so each stays under its daily limit
+
+  During the attempt, the flash models kept answering *"503: this model is currently experiencing high demand"*
+  (Google's side, not a quota error), so only a few calls went through.
+- **So these numbers are left out.** That beats reporting results from two or three complaints.
+
+**What covers quality in the meantime:**
+- the code for these checks is in `run_evals.py` and runs end to end with the fake LLM
+- on real traffic, analyst reviews measure label agreement and answer quality (Quality page and quality PDF)
+- Grafana tracks the abstention and citation-fix rates
+
+With a paid key, the full run costs well under a dollar: `docker compose exec api python -m evals.run_evals`.
+
 ### Live system health
 
 **Prometheus metrics:**
@@ -366,8 +395,9 @@ The 428 resolved tickets have:
 
 ## Known gaps
 
-- Classification and drafting evals need ~135 Gemini calls, which is more than the free tier allows in a day. The code
-  is in place and tested with the fake LLM, but only the retrieval numbers above come from a full run.
+- Classification and drafting evals haven't been run on Gemini yet, because they need more requests than the free
+  tier allows (see [why](#why-the-llm-part-of-the-evals-has-no-numbers-yet)). Only the retrieval numbers come from a
+  full run.
 - The data is synthetic and written by one author, so real tickets would score lower.
 - PII masking is regex based. Names and addresses need an NER model (e.g. Presidio).
 - The analysis runs inside the HTTP request (5–10 s with the LLM). At high traffic it should become a job with live
