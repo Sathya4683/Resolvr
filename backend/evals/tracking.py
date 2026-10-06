@@ -43,6 +43,9 @@ def collect_metrics(results: dict) -> dict[str, float]:
         metrics[metric_name("retrieval", mode, "mrr")] = m["mrr"]
         metrics[metric_name("retrieval", mode, "kb_in_top5")] = m["kb_article_in_top5"] / n
         metrics[metric_name("retrieval", mode, "p50_ms")] = m["p50_ms"]
+        if "right_ticket_first" in m:
+            metrics[metric_name("retrieval", mode, "right_ticket_first")] = m["right_ticket_first"] / n
+            metrics[metric_name("retrieval", mode, "ticket_precision")] = m["ticket_precision"]
 
     for field, m in results.get("classification", {}).items():
         for key, value in m.items():

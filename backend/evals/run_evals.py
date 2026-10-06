@@ -78,7 +78,8 @@ def eval_retrieval(db, rows: list[dict]) -> dict:
     in_scope = [r for r in rows if r["expect_abstain"] != "true"]
     results = {}
     for name, (mode, rerank) in modes.items():
-        stats = {"r@1": 0, "r@3": 0, "r@5": 0, "rr": 0.0, "kb@5": 0, "n": 0, "ms": []}
+        stats = {"r@1": 0, "r@3": 0, "r@5": 0, "rr": 0.0, "kb@5": 0, "t@1": 0, "t_hits": 0, "t_shown": 0, "n": 0,
+                 "ms": []}
         per_kind = Counter()
         for row in in_scope:
             text, _ = redact(row["complaint"])
@@ -96,6 +97,11 @@ def eval_retrieval(db, rows: list[dict]) -> dict:
             stats["r@5"] += bool(first)
             stats["rr"] += 1 / first if first else 0
             stats["kb@5"] += any(r in rel for r in refs if r.startswith("KB-"))
+            #past tickets on their own (the 3 slots after the 2 kb articles), this is what the reranker orders
+            tickets = [r for r in refs if r.startswith("TCK-")]
+            stats["t@1"] += bool(tickets and tickets[0] in rel)
+            stats["t_hits"] += sum(r in rel for r in tickets)
+            stats["t_shown"] += len(tickets)
             if first == 1:
                 per_kind[row["kind"]] += 1
         n = stats["n"]
@@ -106,6 +112,8 @@ def eval_retrieval(db, rows: list[dict]) -> dict:
             "recall@5": stats["r@5"],
             "mrr": round(stats["rr"] / n, 3),
             "kb_article_in_top5": stats["kb@5"],
+            "right_ticket_first": stats["t@1"],
+            "ticket_precision": round(stats["t_hits"] / stats["t_shown"], 3) if stats["t_shown"] else 0,
             "p50_ms": round(statistics.median(stats["ms"]), 1),
             "top1_by_kind": dict(per_kind),
         }
@@ -302,14 +310,16 @@ def write_report(results: dict) -> None:
         "",
         "## A. Retrieval (is a relevant ticket or KB article found?)",
         "",
-        "| Mode | recall@1 | recall@3 | recall@5 | MRR | relevant KB article in top 5 | median latency |",
-        "|---|---|---|---|---|---|---|",
+        "| Mode | recall@1 | recall@3 | recall@5 | MRR | relevant KB article in top 5 | right ticket first | "
+        "ticket precision | median latency |",
+        "|---|---|---|---|---|---|---|---|---|",
     ]
     for name, m in results["retrieval"]["modes"].items():
         n = m["n"]
         lines.append(
             f"| {name} | {m['recall@1']}/{n} | {m['recall@3']}/{n} | {m['recall@5']}/{n} | {m['mrr']} | "
-            f"{m['kb_article_in_top5']}/{n} | {m['p50_ms']} ms |"
+            f"{m['kb_article_in_top5']}/{n} | {m['right_ticket_first']}/{n} | {m['ticket_precision']} | "
+            f"{m['p50_ms']} ms |"
         )
     lines.append("")
     lines.append(f"Complaint kinds: {results['retrieval']['kinds']}")

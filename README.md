@@ -42,7 +42,7 @@ and
 > *"Connection is solid all morning but by evening it keeps cutting out"*
 
 are the same problem, but share almost no keywords. On the held-out test set, keyword search puts a right answer first
-for only **29 of 44** paraphrased complaints. Semantic (hybrid) search gets **38 of 44**.
+for only **28 of 44** paraphrased complaints. Semantic (hybrid) search gets **38 of 44**.
 
 A support desk also needs a few things a plain chatbot doesn't handle:
 - Some complaints are legal threats, regulator escalations (TRAI), SIM-swap fraud or compensation demands. These need
@@ -194,7 +194,7 @@ the LLM is down.
 | Choice | Why |
 |---|---|
 | `bge-base-en-v1.5` for embeddings | I tried `Qwen3-Embedding-0.6B` first, but it embedded ~0.6 tickets/s on my laptop CPU (15 min to seed). bge-base does ~27/s at 20 ms per query, and English-only was enough. |
-| Hybrid search (vectors + full text, merged with RRF) | Keyword search found the right answer first for 29/44 test complaints, vectors 36/44, both together 38/44. |
+| Hybrid search (vectors + full text, merged with RRF) | Keyword search found the right answer first for 28/44 test complaints, vectors 36/44, both together 38/44. On past tickets alone the reranker lifts the right ticket to first place from 37/44 to 40/44. |
 | Rerank only past tickets | Reranking KB articles too pushed the right article out of the sources (39/44 instead of 43/44) and made search ~3x slower. |
 | Postgres for almost everything | Tickets, vectors, full-text search and the batch job queue all live in one database, so there's less to run and back up. |
 | Plain functions, no LangChain / LangGraph | The pipeline is a straight line with two branches. Plain functions were easier to test and to explain. |
@@ -204,6 +204,28 @@ the LLM is down.
 | Abstain when unsure | Similarity scores alone couldn't separate telecom from non-telecom complaints, so the classifier's `in_scope` flag, the drafter and a similarity floor all get a say. |
 | Gemini behind a small interface | Tests use a fake provider. When a model is busy (503/429) it falls back to other Gemini models, then to showing sources only. |
 | Idempotent writes | CSV imports dedupe on a content hash, the daily digest can't be sent twice (unique index), and the analyst lock is a single `UPDATE ... RETURNING`. |
+
+## Additional exploration
+
+Beyond the three asks in the brief:
+
+- **Embedding models compared:** `Qwen3-Embedding-0.6B` vs `bge-base-en-v1.5` on a laptop CPU (speed vs accuracy).
+  bge was chosen.
+- **Search modes compared:** keyword vs vector vs hybrid vs hybrid + reranker, measured on held-out complaints
+  ([results](#offline-evals)).
+- **Reranker placement:** reranking everything vs only past tickets, and why only tickets.
+- **Abstention:** similarity alone couldn't separate in-scope from out-of-scope complaints, so three checks are layered.
+- **Human in the loop:**
+  - admin approval for critical cases
+  - an analyst review queue where one analyst holds an item at a time
+  - analyst notes fed back into future prompts
+- **Safety:** PII masking before any LLM call, a prompt-injection guard, and rules that can only raise severity.
+- **Outage detection:** several near-identical complaints within an hour (matched on meaning, not words) raise an
+  alert.
+- **Reports and alerts:** daily digest and quality PDFs, ntfy push and email.
+- **Experiment tracking:** every eval run is logged to MLflow.
+- **Deployment:** AWS EC2 with Terraform, Caddy for HTTPS, GitHub Actions running the tests before every deploy,
+  rollback by commit.
 
 ## Evaluation and monitoring
 
@@ -222,14 +244,24 @@ It measures:
 - **drafting:** citation validity, abstention correctness, LLM-judged groundedness
 - **operations:** latency, tokens and cost
 
-Retrieval on the 44 in-scope complaints ([full report](backend/evals/results/report.md)):
+Retrieval on the 44 in-scope complaints, run on a freshly seeded database ([full report](backend/evals/results/report.md)).
+The drafter sees the top 5 sources: 2 KB article sections, then 3 past tickets.
 
-| Mode | recall@1 | recall@5 | MRR | right KB article in top 5 |
-|---|---|---|---|---|
-| keyword only (Postgres full text) | 29/44 | 41/44 | 0.778 | 37/44 |
-| vector only (bge-base) | 36/44 | 43/44 | 0.894 | 42/44 |
-| hybrid (RRF) | 38/44 | 43/44 | 0.920 | 43/44 |
-| **hybrid + reranker on past tickets** (used) | **38/44** | **43/44** | **0.920** | **43/44** |
+| Mode | recall@1 | recall@5 | MRR | right KB article in top 5 | right ticket first | ticket precision |
+|---|---|---|---|---|---|---|
+| keyword only (Postgres full text) | 28/44 | 42/44 | 0.778 | 38/44 | 28/44 | 0.63 |
+| vector only (bge-base) | 36/44 | 44/44 | 0.900 | 42/44 | 40/44 | 0.85 |
+| hybrid (RRF) | 38/44 | 44/44 | 0.926 | 43/44 | 37/44 | 0.82 |
+| **hybrid + reranker on past tickets** (used) | **38/44** | **44/44** | **0.926** | **43/44** | **40/44** | **0.84** |
+
+- **recall@k / MRR:** a relevant ticket or KB article anywhere in the top k, and how high the first one sits.
+- **right KB article in top 5:** the help article the steps are built on was retrieved.
+- **right ticket first / ticket precision:** looks at the 3 past tickets only. Is the first one from the same problem,
+  and what share of the 3 are?
+
+Hybrid search wins on the overall numbers and on finding the KB article. On tickets alone, the keyword half pulls in
+some weaker matches (37/44). The reranker fixes that ordering (40/44) without losing hybrid's lead elsewhere, and
+that's the reason it's kept.
 
 Every eval run is logged to **MLflow**: the settings it ran with (models, reranker, threshold, top-k) and every score.
 That way a change to the prompt, model or knowledge base can be compared against earlier runs.
