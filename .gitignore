@@ -30,3 +30,9 @@ dist/
 .idea/
 .vscode/
 *.log
+
+# deploy
+deploy/.keys/
+.terraform/
+*.tfstate
+*.tfstate.*

@@ -1,0 +1,40 @@
+#every push to main updates the demo server (pull + rebuild what changed)
+name: deploy
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+#never run two deploys on the box at once
+concurrency:
+  group: deploy
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      #the server is stopped most of the time, skip instead of failing
+      - name: Check the server is running
+        id: server
+        env:
+          HOST: ${{ secrets.EC2_HOST }}
+        run: |
+          if [ -n "$HOST" ] && timeout 5 bash -c "</dev/tcp/$HOST/22" 2>/dev/null; then
+            echo "up=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "up=false" >> "$GITHUB_OUTPUT"
+            echo "::notice::server is off, skipped. it pulls the latest main when started (deploy/server.sh start)"
+          fi
+
+      - name: Pull and restart on the server
+        if: steps.server.outputs.up == 'true'
+        uses: appleboy/ssh-action@v1
+        with:
+          host: ${{ secrets.EC2_HOST }}
+          username: ubuntu
+          key: ${{ secrets.EC2_SSH_KEY }}
+          command_timeout: 25m
+          script: cd ~/resolvr && ./deploy/deploy.sh main
